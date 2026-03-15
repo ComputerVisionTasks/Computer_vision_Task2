@@ -79,13 +79,14 @@ h6 {
   font-family: var(--heading-font);
 }
 
+
 /*--------------------------------------------------------------
-# Global Header
+# Global Header (Smaller Version)
 --------------------------------------------------------------*/
 .header {
   color: var(--default-color);
   background-color: var(--background-color);
-  padding: 20px 0;
+  padding: 2px 0; /* reduced from 20px */
   transition: all 0.5s;
   z-index: 997;
   border-bottom: 1px solid var(--background-color);
@@ -95,33 +96,36 @@ h6 {
   line-height: 1;
 }
 
+/* smaller logo */
 .header .logo img {
-  max-height: 36px;
-  margin-right: 8px;
+  max-height: 28px; /* was 36px */
+  margin-right: 10px;
 }
 
+/* smaller title */
 .header .logo h1 {
-  font-size: 32px;
+  font-size: 24px; /* was 32px */
   margin: 0;
   font-weight: 400;
   color: var(--heading-color);
 }
 
 .header .logo i {
-  font-size: 28px;
-  margin-right: 6px;
+  font-size: 22px; /* was 28px */
+  margin-right: 10px;
 }
 
+/* reduce spacing */
 .header .header-social-links {
-  padding-right: 15px;
+  padding-right: 10px;
 }
 
 .header .header-social-links a {
   color: color-mix(in srgb, var(--default-color), transparent 40%);
-  padding-left: 6px;
+  padding-left: 5px;
   display: inline-block;
   transition: 0.3s;
-  font-size: 16px;
+  font-size: 14px; /* smaller icons */
 }
 
 .header .header-social-links a:hover {
@@ -132,17 +136,19 @@ h6 {
   line-height: 0px;
 }
 
+/* Responsive */
 @media (max-width: 1200px) {
+
   .header .logo {
     order: 1;
   }
 
   .header .logo h1 {
-    font-size: 26px;
+    font-size: 20px; /* smaller */
   }
 
   .header .logo i {
-    font-size: 20px;
+    font-size: 18px;
   }
 
   .header .header-social-links {
@@ -150,7 +156,7 @@ h6 {
   }
 
   .header .header-social-links a {
-    font-size: 16px;
+    font-size: 14px;
   }
 
   .header .navmenu {
@@ -161,7 +167,6 @@ h6 {
 .scrolled .header {
   border-color: color-mix(in srgb, var(--background-color) 90%, white 20%);
 }
-
 /*--------------------------------------------------------------
 # Navigation Menu
 --------------------------------------------------------------*/
@@ -663,7 +668,7 @@ section,
 .section {
   color: var(--default-color);
   background-color: var(--background-color);
-  padding: 60px 0;
+  padding: 20px 0;
   scroll-margin-top: 100px;
   overflow: clip;
 }
