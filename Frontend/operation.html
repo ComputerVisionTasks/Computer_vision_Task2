@@ -6,7 +6,8 @@
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <title>FromScratchCV - Computer Vision Operations</title>
   <meta name="description" content="Advanced computer vision operations implemented from scratch">
-  <meta name="keywords" content="computer vision, edge detection, shape detection, active contour, snake, image processing">
+  <meta name="keywords"
+    content="computer vision, edge detection, shape detection, active contour, snake, image processing">
 
   <!-- Favicons -->
   <link href="assets/img/Logo_cv.png" rel="icon">
@@ -15,7 +16,9 @@
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com" rel="preconnect">
   <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Cardo:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Cardo:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+    rel="stylesheet">
 
   <!-- Vendor CSS Files -->
   <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -58,98 +61,104 @@
     <!-- Image Upload and Preview Section - Side by Side -->
     <section id="image-workspace" class="section">
       <div class="container-fluid px-4">
-        <div class="row g-4">
-          <!-- Left Column - Upload Area (Compact Version) -->
-<div class="col-lg-3">
-  <div class="upload-card compact">
-    <div class="upload-card-header">
-      <i class="bi bi-cloud-upload"></i>
-      <h4>Upload Image</h4>
-    </div>
-    <div class="upload-card-body">
-      <div class="upload-area compact" id="uploadArea">
-        <div class="upload-content">
-          <i class="bi bi-cloud-arrow-up upload-icon compact"></i>
-          <h3 class="upload-title compact">Drag & Drop</h3>
-          <p class="upload-subtitle compact">or click to browse</p>
-          <p class="upload-formats compact">JPG, PNG, BMP</p>
-          <input type="file" id="fileInput" accept="image/*" hidden>
-          <button class="btn btn-upload compact" id="browseBtn" type="button">
-            <i class="bi bi-folder2-open me-1"></i>Browse
-          </button>
-        </div>
-      </div>
-      
-      <!-- Quick Actions - Compact -->
-      <div class="upload-actions compact mt-2">
-        <button class="btn btn-outline-action compact w-100 mb-1" id="undoBtn" type="button" disabled>
-          <i class="bi bi-arrow-counterclockwise me-1"></i>Undo
-        </button>
-        <div class="row g-1">
-          <div class="col-6">
-            <button class="btn btn-outline-action compact w-100" id="resetBtn" type="button" disabled>
-              <i class="bi bi-arrow-repeat"></i>
-            </button>
+        <div class="row g-2"> <!-- Reduced from g-4 to g-2 -->
+          <!-- Left Column - Upload Area (Ultra Compact Version) -->
+          <div class="col-lg-3">
+            <div class="upload-card ultra-compact">
+              <div class="upload-card-header ultra-compact">
+                <i class="bi bi-cloud-upload"></i>
+                <h4>UPLOAD IMAGE</h4>
+              </div>
+              <div class="upload-card-body ultra-compact p-2">
+                <!-- Upload Area - Made more prominent -->
+                <div class="upload-area ultra-compact" id="uploadArea">
+                  <div class="upload-content">
+                    <i class="bi bi-cloud-arrow-up upload-icon ultra-compact"></i>
+                    <h3 class="upload-title ultra-compact">DRAG & DROP</h3>
+                    <p class="upload-subtitle ultra-compact">or click to browse</p>
+                    <p class="upload-formats ultra-compact">JPG, PNG, BMP</p>
+                    <input type="file" id="fileInput" accept="image/*" hidden>
+                    <button class="btn btn-upload ultra-compact w-100" id="browseBtn" type="button">
+                      <i class="bi bi-folder2-open me-1"></i>Browse Files
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Quick Actions - Full width buttons -->
+                <div class="upload-actions ultra-compact mt-2">
+                  <!-- Undo Button - Full width with icon and text -->
+                  <button class="btn btn-outline-action ultra-compact w-100 mb-2" id="undoBtn" type="button" disabled>
+                    <i class="bi bi-arrow-counterclockwise me-2"></i>Undo Last Action
+                  </button>
+
+                  <!-- Reset and Save - Side by side with equal width -->
+                  <div class="row g-2">
+                    <div class="col-6">
+                      <button class="btn btn-outline-action ultra-compact w-100" id="resetBtn" type="button" disabled>
+                        <i class="bi bi-arrow-repeat me-1"></i>Reset
+                      </button>
+                    </div>
+                    <div class="col-6">
+                      <button class="btn btn-outline-action ultra-compact w-100" id="saveBtn" type="button" disabled>
+                        <i class="bi bi-download me-1"></i>Save
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="col-6">
-            <button class="btn btn-outline-action compact w-100" id="saveBtn" type="button" disabled>
-              <i class="bi bi-download"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
           <!-- Right Column - Preview Cards Side by Side -->
           <div class="col-lg-9">
-            <div class="row g-4">
+            <div class="row g-2"> <!-- Reduced from g-4 to g-2 -->
               <!-- Original Image Preview -->
               <div class="col-md-6">
-                <div class="preview-card">
-                  <div class="preview-header">
+                <div class="preview-card ultra-compact">
+                  <div class="preview-header ultra-compact">
                     <div class="d-flex align-items-center">
                       <i class="bi bi-image me-2"></i>
-                      <h5 class="preview-title mb-0">Original Image</h5>
+                      <h5 class="preview-title ultra-compact mb-0">ORIGINAL</h5>
                     </div>
-                    <span class="badge bg-info" id="imageInfo" style="display: none;">0x0</span>
+                    <span class="badge bg-info ultra-compact" id="imageInfo" style="display: none;">0x0</span>
                   </div>
-                  <div class="preview-body">
-                    <div class="placeholder-container" id="originalPlaceholder">
-                      <i class="bi bi-image placeholder-icon"></i>
-                      <p class="placeholder-text">No image uploaded</p>
+                  <div class="preview-body ultra-compact">
+                    <div class="placeholder-container ultra-compact" id="originalPlaceholder">
+                      <i class="bi bi-image placeholder-icon ultra-compact"></i>
+                      <p class="placeholder-text ultra-compact">No image</p>
                     </div>
-                    <img id="originalPreview" class="img-fluid preview-image" alt="Original" style="cursor: crosshair; display: none;">
+                    <img id="originalPreview" class="img-fluid preview-image ultra-compact" alt="Original"
+                      style="cursor: crosshair; display: none;">
                   </div>
                 </div>
               </div>
 
               <!-- Processed Image Preview -->
               <div class="col-md-6">
-                <div class="preview-card">
-                  <div class="preview-header">
+                <div class="preview-card ultra-compact">
+                  <div class="preview-header ultra-compact">
                     <div class="d-flex align-items-center">
                       <i class="bi bi-magic me-2"></i>
-                      <h5 class="preview-title mb-0">Processed Image</h5>
+                      <h5 class="preview-title ultra-compact mb-0">PROCESSED</h5>
                     </div>
-                    <span class="badge bg-success" id="processInfo" style="display: none;">Ready</span>
+                    <span class="badge bg-success ultra-compact" id="processInfo" style="display: none;">Ready</span>
                   </div>
-                  <div class="preview-body">
-                    <div class="placeholder-container" id="processedPlaceholder">
-                      <i class="bi bi-image placeholder-icon"></i>
-                      <p class="placeholder-text">No image processed</p>
+                  <div class="preview-body ultra-compact">
+                    <div class="placeholder-container ultra-compact" id="processedPlaceholder">
+                      <i class="bi bi-image placeholder-icon ultra-compact"></i>
+                      <p class="placeholder-text ultra-compact">No result</p>
                     </div>
-                    <img id="processedPreview" class="img-fluid preview-image" alt="Processed" style="display: none;">
+                    <img id="processedPreview" class="img-fluid preview-image ultra-compact" alt="Processed"
+                      style="display: none;">
                   </div>
-                  
-                  <!-- Processing Status -->
-                  <div class="preview-footer" id="processingStatus" style="display: none;">
-                    <div class="progress">
-                      <div class="progress-bar progress-bar-striped progress-bar-animated" 
-                           role="progressbar" style="width: 0%"></div>
+
+                  <!-- Processing Status - Ultra Compact -->
+                  <div class="preview-footer ultra-compact" id="processingStatus" style="display: none;">
+                    <div class="progress ultra-compact">
+                      <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                        style="width: 0%"></div>
                     </div>
-                    <span class="status-text">Processing...</span>
+                    <span class="status-text ultra-compact">Processing...</span>
                   </div>
                 </div>
               </div>
@@ -168,22 +177,26 @@
               <!-- Tabs Navigation -->
               <ul class="nav nav-tabs" id="operationTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                  <button class="nav-link active" id="edge-tab" data-bs-toggle="tab" data-bs-target="#edge" type="button" role="tab" aria-controls="edge" aria-selected="true">
+                  <button class="nav-link active" id="edge-tab" data-bs-toggle="tab" data-bs-target="#edge"
+                    type="button" role="tab" aria-controls="edge" aria-selected="true">
                     <i class="bi bi-grid-3x3-gap-fill me-2"></i>Edge Detection
                   </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                  <button class="nav-link" id="shape-tab" data-bs-toggle="tab" data-bs-target="#shape" type="button" role="tab" aria-controls="shape" aria-selected="false">
+                  <button class="nav-link" id="shape-tab" data-bs-toggle="tab" data-bs-target="#shape" type="button"
+                    role="tab" aria-controls="shape" aria-selected="false">
                     <i class="bi bi-shapes me-2"></i>Shape Detection
                   </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                  <button class="nav-link" id="snake-tab" data-bs-toggle="tab" data-bs-target="#snake" type="button" role="tab" aria-controls="snake" aria-selected="false">
+                  <button class="nav-link" id="snake-tab" data-bs-toggle="tab" data-bs-target="#snake" type="button"
+                    role="tab" aria-controls="snake" aria-selected="false">
                     <i class="bi bi-bezier2 me-2"></i>Active Contour
                   </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                  <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button" role="tab" aria-controls="analysis" aria-selected="false">
+                  <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis"
+                    type="button" role="tab" aria-controls="analysis" aria-selected="false">
                     <i class="bi bi-bar-chart-line me-2"></i>Contour Analysis
                   </button>
                 </li>
@@ -194,36 +207,56 @@
                 <!-- Edge Detection Tab -->
                 <div class="tab-pane fade show active" id="edge" role="tabpanel" aria-labelledby="edge-tab">
                   <div class="row">
+                    <!-- Left Column - Sliders (70% width) -->
                     <div class="col-md-8">
-                      <div class="form-group mb-3">
-                        <label class="form-label">
-                          Low Threshold <span class="value-display" id="lowThresholdValue">0.05</span>
-                        </label>
-                        <input type="range" class="form-range" id="lowThreshold" min="0" max="0.5" step="0.01" value="0.05">
+                      <!-- First Row - Two Sliders Side by Side -->
+                      <div class="row g-8 mb-3">
+                        <div class="col-md-6">
+                          <div class="form-group">
+                            <label class="form-label">
+                              Low Threshold <span class="value-display" id="lowThresholdValue">0.05</span>
+                            </label>
+                            <input type="range" class="form-range" id="lowThreshold" min="0" max="0.5" step="0.01"
+                              value="0.05">
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="form-group">
+                            <label class="form-label">
+                              High Threshold <span class="value-display" id="highThresholdValue">0.15</span>
+                            </label>
+                            <input type="range" class="form-range" id="highThreshold" min="0" max="0.5" step="0.01"
+                              value="0.15">
+                          </div>
+                        </div>
                       </div>
-                      <div class="form-group mb-3">
-                        <label class="form-label">
-                          High Threshold <span class="value-display" id="highThresholdValue">0.15</span>
-                        </label>
-                        <input type="range" class="form-range" id="highThreshold" min="0" max="0.5" step="0.01" value="0.15">
-                      </div>
-                      <div class="form-group mb-3">
-                        <label class="form-label">
-                          Sigma (Gaussian Blur) <span class="value-display" id="sigmaValue">1.0</span>
-                        </label>
-                        <input type="range" class="form-range" id="sigma" min="0.5" max="3.0" step="0.1" value="1.0">
-                      </div>
-                      <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="showEdgeOverlay">
-                        <label class="form-check-label" for="showEdgeOverlay">
-                          Show Edge Overlay
-                        </label>
+
+                      <!-- Second Row - Third Slider and Checkbox -->
+                      <div class="row g-2">
+                        <div class="col-md-6">
+                          <div class="form-group">
+                            <label class="form-label">
+                              Sigma (Gaussian Blur) <span class="value-display" id="sigmaValue">1.0</span>
+                            </label>
+                            <input type="range" class="form-range" id="sigma" min="0.5" max="3.0" step="0.1"
+                              value="1.0">
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="form-check mt-4"> <!-- mt-4 to align with slider -->
+                            <input class="form-check-input" type="checkbox" id="showEdgeOverlay">
+                            <label class="form-check-label" for="showEdgeOverlay">
+                              Show Edge Overlay
+                            </label>
+                          </div>
+                        </div>
                       </div>
                     </div>
+
+                    <!-- Right Column - Run Button (30% width) -->
                     <div class="col-md-4 d-flex align-items-end">
-                      
-                      <button class="btn btn-upload compact" id="runCanny" type="button" disabled>
-                        Run Canny Edge Detection
+                      <button class="btn btn-upload ultra-compact" id="runCanny" type="button" disabled>
+                        <i class="bi bi-play-fill me-2"></i>Run Canny Edge Detection
                       </button>
                     </div>
                   </div>
@@ -259,14 +292,15 @@
                           </div>
                         </div>
                       </div>
-                      
+
                       <div class="form-group mt-3">
                         <label class="form-label">
                           Line Threshold <span class="value-display" id="lineThresholdValue">50</span>
                         </label>
-                        <input type="range" class="form-range" id="lineThreshold" min="10" max="200" step="5" value="50">
+                        <input type="range" class="form-range" id="lineThreshold" min="10" max="200" step="5"
+                          value="50">
                       </div>
-                      
+
                       <div class="row mt-3">
                         <div class="col-md-6">
                           <label class="form-label">Min Circle Radius</label>
@@ -277,12 +311,13 @@
                           <input type="number" class="form-control" id="maxRadius" value="100" min="10" max="500">
                         </div>
                       </div>
-                      
+
                       <div class="form-group mt-3">
                         <label class="form-label">
                           Ellipse Tolerance <span class="value-display" id="ellipseToleranceValue">0.1</span>
                         </label>
-                        <input type="range" class="form-range" id="ellipseTolerance" min="0.01" max="0.5" step="0.01" value="0.1">
+                        <input type="range" class="form-range" id="ellipseTolerance" min="0.01" max="0.5" step="0.01"
+                          value="0.1">
                       </div>
                     </div>
                     <div class="col-md-4 d-flex align-items-end">
@@ -301,7 +336,7 @@
                         Click on the original image to add contour points. Click 'Initialize Contour' when done.
                         <span class="badge bg-secondary ms-2" id="pointCount">0 points</span>
                       </div>
-                      
+
                       <div class="row">
                         <div class="col-md-4">
                           <label class="form-label">
@@ -322,10 +357,11 @@
                           <input type="range" class="form-range" id="gamma" min="0.1" max="3.0" step="0.1" value="1.0">
                         </div>
                       </div>
-                      
+
                       <div class="form-group mt-3">
                         <label class="form-label">Iterations</label>
-                        <input type="number" class="form-control" id="iterations" value="100" min="10" max="1000" step="10">
+                        <input type="number" class="form-control" id="iterations" value="100" min="10" max="1000"
+                          step="10">
                       </div>
                     </div>
                     <div class="col-md-4 d-flex flex-column justify-content-end">
@@ -389,10 +425,10 @@
                   </div>
                 </div>
               </div>
-              </div>
             </div>
           </div>
         </div>
+      </div>
       </div>
     </section>
   </main>
@@ -400,7 +436,8 @@
   <footer id="footer" class="footer">
     <div class="container">
       <div class="copyright text-center">
-        <p>© <span>Copyright</span> <strong class="px-1 sitename">FromScratchCV</strong> <span>All Rights Reserved</span></p>
+        <p>© <span>Copyright</span> <strong class="px-1 sitename">FromScratchCV</strong> <span>All Rights
+            Reserved</span></p>
       </div>
       <div class="social-links d-flex justify-content-center">
         <a href="#"><i class="bi bi-twitter-x"></i></a>

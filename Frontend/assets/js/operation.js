@@ -105,33 +105,33 @@ function initializeEventListeners() {
     // Shape detection
     const lineThreshold = document.getElementById('lineThreshold');
     const ellipseTolerance = document.getElementById('ellipseTolerance');
-    const detectShapes = document.getElementById('detectShapes');
+    const detectShapesBtn = document.getElementById('detectShapes');
     
     if (lineThreshold) lineThreshold.addEventListener('input', updateRangeDisplay);
     if (ellipseTolerance) ellipseTolerance.addEventListener('input', updateRangeDisplay);
-    if (detectShapes) detectShapes.addEventListener('click', detectShapes);
+    if (detectShapesBtn) detectShapesBtn.addEventListener('click', detectShapes);
 
     // Snake
     const alpha = document.getElementById('alpha');
     const beta = document.getElementById('beta');
     const gamma = document.getElementById('gamma');
-    const initSnake = document.getElementById('initSnake');
-    const runSnake = document.getElementById('runSnake');
-    const clearPoints = document.getElementById('clearPoints');
+    const initSnakeBtn = document.getElementById('initSnake');
+    const runSnakeBtn = document.getElementById('runSnake');
+    const clearPointsBtn = document.getElementById('clearPoints');
     
     if (alpha) alpha.addEventListener('input', updateRangeDisplay);
     if (beta) beta.addEventListener('input', updateRangeDisplay);
     if (gamma) gamma.addEventListener('input', updateRangeDisplay);
-    if (initSnake) initSnake.addEventListener('click', initializeSnake);
-    if (runSnake) runSnake.addEventListener('click', runSnake);
-    if (clearPoints) clearPoints.addEventListener('click', clearSnakePoints);
+    if (initSnakeBtn) initSnakeBtn.addEventListener('click', initializeSnake);
+    if (runSnakeBtn) runSnakeBtn.addEventListener('click', runSnakeEvolution);
+    if (clearPointsBtn) clearPointsBtn.addEventListener('click', clearSnakePoints);
 
     // Analysis
-    const analyzeContour = document.getElementById('analyzeContour');
-    const exportChainCode = document.getElementById('exportChainCode');
+    const analyzeContourBtn = document.getElementById('analyzeContour');
+    const exportChainCodeBtn = document.getElementById('exportChainCode');
     
-    if (analyzeContour) analyzeContour.addEventListener('click', analyzeContour);
-    if (exportChainCode) exportChainCode.addEventListener('click', exportResults);
+    if (analyzeContourBtn) analyzeContourBtn.addEventListener('click', analyzeContour);
+    if (exportChainCodeBtn) exportChainCodeBtn.addEventListener('click', exportResults);
 
     // Original image click for snake points
     const originalPreview = document.getElementById('originalPreview');
@@ -615,7 +615,7 @@ async function initializeSnake() {
 }
 
 // Run snake evolution
-async function runSnake() {
+async function runSnakeEvolution() {
     if (!currentState.snakeInitialized) {
         showToast('Please initialize snake first', 'error');
         return;
