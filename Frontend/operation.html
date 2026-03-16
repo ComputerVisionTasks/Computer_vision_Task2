@@ -204,63 +204,103 @@
 
               <!-- Tabs Content -->
               <div class="tab-content p-4" id="operationTabContent">
-                <!-- Edge Detection Tab -->
                 <div class="tab-pane fade show active" id="edge" role="tabpanel" aria-labelledby="edge-tab">
-                  <div class="row">
-                    <!-- Left Column - Sliders (70% width) -->
-                    <div class="col-md-8">
-                      <!-- First Row - Two Sliders Side by Side -->
-                      <div class="row g-8 mb-3">
-                        <div class="col-md-6">
-                          <div class="form-group">
-                            <label class="form-label">
-                              Low Threshold <span class="value-display" id="lowThresholdValue">0.05</span>
-                            </label>
-                            <input type="range" class="form-range" id="lowThreshold" min="0" max="0.5" step="0.01"
-                              value="0.05">
-                          </div>
-                        </div>
-                        <div class="col-md-6">
-                          <div class="form-group">
-                            <label class="form-label">
-                              High Threshold <span class="value-display" id="highThresholdValue">0.15</span>
-                            </label>
-                            <input type="range" class="form-range" id="highThreshold" min="0" max="0.5" step="0.01"
-                              value="0.15">
-                          </div>
-                        </div>
-                      </div>
+  <div class="row">
+    <!-- Left Column - Sliders (70% width) -->
+    <div class="col-md-8">
+      <!-- First Row - Two Sliders Side by Side with improved styling -->
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <div class="slider-card">
+            <div class="slider-header">
+              <span class="slider-title">Low Threshold</span>
+              <span class="value-badge" id="lowThresholdValue">0.05</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" class="form-range custom-slider" id="lowThreshold" min="0" max="0.5" step="0.01" value="0.05">
+              <div class="slider-labels">
+                <span>0</span>
+                <span>0.25</span>
+                <span>0.5</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="slider-card">
+            <div class="slider-header">
+              <span class="slider-title">High Threshold</span>
+              <span class="value-badge" id="highThresholdValue">0.15</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" class="form-range custom-slider" id="highThreshold" min="0" max="0.5" step="0.01" value="0.15">
+              <div class="slider-labels">
+                <span>0</span>
+                <span>0.25</span>
+                <span>0.5</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-                      <!-- Second Row - Third Slider and Checkbox -->
-                      <div class="row g-2">
-                        <div class="col-md-6">
-                          <div class="form-group">
-                            <label class="form-label">
-                              Sigma (Gaussian Blur) <span class="value-display" id="sigmaValue">1.0</span>
-                            </label>
-                            <input type="range" class="form-range" id="sigma" min="0.5" max="3.0" step="0.1"
-                              value="1.0">
-                          </div>
-                        </div>
-                        <div class="col-md-6">
-                          <div class="form-check mt-4"> <!-- mt-4 to align with slider -->
-                            <input class="form-check-input" type="checkbox" id="showEdgeOverlay">
-                            <label class="form-check-label" for="showEdgeOverlay">
-                              Show Edge Overlay
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+      <!-- Second Row - Third Slider and Checkbox with improved styling -->
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="slider-card">
+            <div class="slider-header">
+              <span class="slider-title">Sigma (Gaussian Blur)</span>
+              <span class="value-badge" id="sigmaValue">1.0</span>
+            </div>
+            <div class="slider-container">
+              <input type="range" class="form-range custom-slider" id="sigma" min="0.5" max="3.0" step="0.1" value="1.0">
+              <div class="slider-labels">
+                <span>0.5</span>
+                <span>1.75</span>
+                <span>3.0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="checkbox-card">
+            <div class="checkbox-wrapper">
+              <input class="custom-checkbox" type="checkbox" id="showEdgeOverlay">
+              <label class="checkbox-label" for="showEdgeOverlay">
+                <span class="checkbox-text">Show Edge Overlay</span>
+                <span class="checkbox-description">Display edges on original</span>
+              </label>
+            </div>
+            <div class="checkbox-info">
+              <i class="bi bi-info-circle"></i>
+              <small>Overlay edges in red</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-                    <!-- Right Column - Run Button (30% width) -->
-                    <div class="col-md-4 d-flex align-items-end">
-                      <button class="btn btn-upload ultra-compact" id="runCanny" type="button" disabled>
-                        <i class="bi bi-play-fill me-2"></i>Run Canny Edge Detection
-                      </button>
-                    </div>
-                  </div>
-                </div>
+    <!-- Right Column - Run Button with improved styling -->
+    <div class="col-md-4 d-flex align-items-end">
+      <div class="run-button-container">
+        <button class="btn run-button" id="runCanny" type="button" disabled>
+          <div class="button-content">
+            <i class="bi bi-play-fill button-icon"></i>
+            <div class="button-text">
+              <span class="button-title">Run Canny</span>
+              <span class="button-subtitle">Edge Detection</span>
+            </div>
+          </div>
+          <div class="button-shine"></div>
+        </button>
+        <div class="button-hint">
+          <i class="bi bi-magic"></i>
+          <small>Detect edges in image</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
                 <!-- Shape Detection Tab -->
                 <div class="tab-pane fade" id="shape" role="tabpanel" aria-labelledby="shape-tab">
