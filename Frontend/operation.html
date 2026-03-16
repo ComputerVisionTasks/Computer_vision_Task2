@@ -371,49 +371,114 @@
                 <!-- Active Contour (Snake) Tab -->
                 <div class="tab-pane fade" id="snake" role="tabpanel" aria-labelledby="snake-tab">
                   <div class="row">
+                    <!-- Left Column - Sliders (70% width) -->
                     <div class="col-md-8">
-                      <div class="alert alert-info" id="snakeInstruction">
-                        Click on the original image to add contour points. Click 'Initialize Contour' when done.
+                      <!-- Alert for instructions -->
+                      <div class="alert alert-info mb-3" id="snakeInstruction">
+                        <i class="bi bi-info-circle me-2"></i>Click on the original image to add contour points. Click 'Initialize Contour' when done.
                         <span class="badge bg-secondary ms-2" id="pointCount">0 points</span>
                       </div>
 
-                      <div class="row">
-                        <div class="col-md-4">
-                          <label class="form-label">
-                            Alpha (Elasticity) <span class="value-display" id="alphaValue">0.5</span>
-                          </label>
-                          <input type="range" class="form-range" id="alpha" min="0" max="1" step="0.05" value="0.5">
+                      <!-- First Row - Alpha and Beta Sliders -->
+                      <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                          <div class="slider-card">
+                            <div class="slider-header">
+                              <span class="slider-title">Alpha (Elasticity)</span>
+                              <span class="value-badge" id="alphaValueBadge">0.50</span>
+                            </div>
+                            <div class="slider-container">
+                              <input type="range" class="form-range custom-slider" id="alpha" min="0" max="1" step="0.05" value="0.5">
+                              <div class="slider-labels">
+                                <span>0</span>
+                                <span>0.5</span>
+                                <span>1.0</span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <div class="col-md-4">
-                          <label class="form-label">
-                            Beta (Smoothness) <span class="value-display" id="betaValue">0.5</span>
-                          </label>
-                          <input type="range" class="form-range" id="beta" min="0" max="1" step="0.05" value="0.5">
-                        </div>
-                        <div class="col-md-4">
-                          <label class="form-label">
-                            Gamma (Step Size) <span class="value-display" id="gammaValue">1.0</span>
-                          </label>
-                          <input type="range" class="form-range" id="gamma" min="0.1" max="3.0" step="0.1" value="1.0">
+                        <div class="col-md-6">
+                          <div class="slider-card">
+                            <div class="slider-header">
+                              <span class="slider-title">Beta (Smoothness)</span>
+                              <span class="value-badge" id="betaValueBadge">0.50</span>
+                            </div>
+                            <div class="slider-container">
+                              <input type="range" class="form-range custom-slider" id="beta" min="0" max="1" step="0.05" value="0.5">
+                              <div class="slider-labels">
+                                <span>0</span>
+                                <span>0.5</span>
+                                <span>1.0</span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
-                      <div class="form-group mt-3">
-                        <label class="form-label">Iterations</label>
-                        <input type="number" class="form-control" id="iterations" value="100" min="10" max="1000"
-                          step="10">
+                      <!-- Second Row - Iterations and Gamma Sliders -->
+                      <div class="row g-3">
+                        <div class="col-md-6">
+                          <div class="slider-card">
+                            <div class="slider-header">
+                              <span class="slider-title">Iterations</span>
+                              <span class="value-badge" id="iterationsValueBadge">100</span>
+                            </div>
+                            <div class="slider-container">
+                              <input type="range" class="form-range custom-slider" id="iterations" min="10" max="500" step="10" value="100">
+                              <div class="slider-labels">
+                                <span>10</span>
+                                <span>255</span>
+                                <span>500</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="slider-card">
+                            <div class="slider-header">
+                              <span class="slider-title">Gamma (Step Size)</span>
+                              <span class="value-badge" id="gammaValueBadge">1.00</span>
+                            </div>
+                            <div class="slider-container">
+                              <input type="range" class="form-range custom-slider" id="gamma" min="0.1" max="3.0" step="0.1" value="1.0">
+                              <div class="slider-labels">
+                                <span>0.1</span>
+                                <span>1.5</span>
+                                <span>3.0</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div class="col-md-4 d-flex flex-column justify-content-end">
-                      <button class="btn btn-secondary mb-2" id="initSnake" type="button" disabled>
-                        Initialize Contour
-                      </button>
-                      <button class="btn btn-primary" id="runSnake" type="button" disabled>
-                        Run Snake
-                      </button>
-                      <button class="btn btn-outline-secondary mt-2" id="clearPoints" type="button" disabled>
-                        Clear Points
-                      </button>
+
+                    <!-- Right Column - Run Buttons -->
+                    <div class="col-md-4 d-flex flex-column gap-2">
+                      <div class="run-button-container">
+                        <button class="btn run-button" id="initSnake" type="button" disabled>
+                          <div class="button-content">
+                            <i class="bi bi-circle-fill button-icon"></i>
+                            <div class="button-text">
+                              <span class="button-title">Initialize</span>
+                              <span class="button-subtitle">Set Contour</span>
+                            </div>
+                          </div>
+                          <div class="button-shine"></div>
+                        </button>
+                      </div>
+                      
+                      <div class="run-button-container">
+                        <button class="btn run-button" id="runSnake" type="button" disabled>
+                          <div class="button-content">
+                            <i class="bi bi-play-fill button-icon"></i>
+                            <div class="button-text">
+                              <span class="button-title">Run Snake</span>
+                              <span class="button-subtitle">Evolve Contour</span>
+                            </div>
+                          </div>
+                          <div class="button-shine"></div>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -421,46 +486,98 @@
                 <!-- Contour Analysis Tab -->
                 <div class="tab-pane fade" id="analysis" role="tabpanel" aria-labelledby="analysis-tab">
                   <div class="row">
-                    <div class="col-md-6">
-                      <div class="analysis-card">
-                        <h5 class="analysis-title">Contour Properties</h5>
-                        <table class="table table-dark">
-                          <tr>
-                            <th>Perimeter:</th>
-                            <td id="perimeterValue">-</td>
-                          </tr>
-                          <tr>
-                            <th>Area:</th>
-                            <td id="areaValue">-</td>
-                          </tr>
-                          <tr>
-                            <th>Number of Points:</th>
-                            <td id="numPointsValue">-</td>
-                          </tr>
-                          <tr>
-                            <th>Closed Contour:</th>
-                            <td id="closedValue">-</td>
-                          </tr>
-                        </table>
+                    <!-- Left Column - Analysis Results (70% width) -->
+                    <div class="col-md-8">
+                      <!-- Contour Properties Card -->
+                      <div class="analysis-card mb-3">
+                        <h5 class="analysis-title">
+                          <i class="bi bi-graph-up me-2"></i>Contour Properties
+                        </h5>
+                        <div class="row g-3">
+                          <div class="col-md-6">
+                            <div class="metric-display">
+                              <div class="metric-label">Perimeter</div>
+                              <div class="metric-value" id="perimeterValue">-</div>
+                              <small class="metric-unit">pixels</small>
+                            </div>
+                          </div>
+                          <div class="col-md-6">
+                            <div class="metric-display">
+                              <div class="metric-label">Area</div>
+                              <div class="metric-value" id="areaValue">-</div>
+                              <small class="metric-unit">sq. pixels</small>
+                            </div>
+                          </div>
+                          <div class="col-md-6">
+                            <div class="metric-display">
+                              <div class="metric-label">Boundary Points</div>
+                              <div class="metric-value" id="numPointsValue">-</div>
+                              <small class="metric-unit">points</small>
+                            </div>
+                          </div>
+                          <div class="col-md-6">
+                            <div class="metric-display">
+                              <div class="metric-label">Closed Contour</div>
+                              <div class="metric-value" id="closedValue">-</div>
+                              <small class="metric-unit">status</small>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div class="col-md-6">
+
+                      <!-- Freeman Chain Code Card -->
                       <div class="analysis-card">
-                        <h5 class="analysis-title">Freeman Chain Code</h5>
+                        <h5 class="analysis-title">
+                          <i class="bi bi-code me-2"></i>Freeman Chain Code
+                        </h5>
                         <div class="chain-code-box" id="chainCodeBox">
                           <span class="text-muted">No chain code available</span>
                         </div>
-                        <button class="btn btn-sm btn-outline-primary mt-2" id="exportChainCode" type="button" disabled>
-                          Export Results
-                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Right Column - Direction Color Map (30% width) -->
+                    <div class="col-md-4 d-flex flex-column gap-3">
+                      <!-- Direction Color Map Image -->
+                      <div class="analysis-card image-card">
+                        <h6 class="analysis-title" style="font-size: 0.75rem; margin-bottom: 0.75rem;">
+                          <i class="bi bi-image me-1"></i>Direction Color Map
+                        </h6>
+                        <div class="analysis-image-box" id="freemanCodeBox" style="height: 360px; background: #1a1a1a; border-radius: 8px; overflow: hidden;">
+                          <img id="freemanCodeImage" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                          <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted);">
+                            <small>No image</small>
+                          </div>
+                        </div>
+                        <div class="freeman-legend mt-2">
+                          <div class="legend-item"><span class="legend-color" style="background:#ff4040;"></span><span class="legend-text">0 - E</span></div>
+                          <div class="legend-item"><span class="legend-color" style="background:#ffa500;"></span><span class="legend-text">1 - SE</span></div>
+                          <div class="legend-item"><span class="legend-color" style="background:#40dc40;"></span><span class="legend-text">2 - S</span></div>
+                          <div class="legend-item"><span class="legend-color" style="background:#00d2b4;"></span><span class="legend-text">3 - SW</span></div>
+                          <div class="legend-item"><span class="legend-color" style="background:#4080ff;"></span><span class="legend-text">4 - W</span></div>
+                          <div class="legend-item"><span class="legend-color" style="background:#b440ff;"></span><span class="legend-text">5 - NW</span></div>
+                          <div class="legend-item"><span class="legend-color" style="background:#ff40dc;"></span><span class="legend-text">6 - N</span></div>
+                          <div class="legend-item"><span class="legend-color" style="background:#ffdc40;"></span><span class="legend-text">7 - NE</span></div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div class="row mt-3">
-                    <div class="col-12">
-                      <button class="btn btn-primary" id="analyzeContour" type="button" disabled>
-                        Compute Results
-                      </button>
+
+                  <!-- Bottom Row - Run Button -->
+                  <div class="row mt-4">
+                    <div class="col-12 d-flex gap-2">
+                      <div class="run-button-container" style="max-width: 300px; margin: 0 auto; width: 100%;">
+                        <button class="btn run-button" id="analyzeContour" type="button" disabled>
+                          <div class="button-content">
+                            <i class="bi bi-bar-chart-line button-icon"></i>
+                            <div class="button-text">
+                              <span class="button-title">Compute Results</span>
+                              <span class="button-subtitle">Analyze Contour</span>
+                            </div>
+                          </div>
+                          <div class="button-shine"></div>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

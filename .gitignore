@@ -1,2 +1,4 @@
 # Ignore Python virtual environment
 venv/
+.vscode/
+build/

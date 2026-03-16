@@ -16,3 +16,7 @@ struct ContourAnalysis {
 };
 
 ContourAnalysis analyze_contour(const GrayImage& edges);
+
+// Freeman visualization functions
+RGBImage render_freeman_overlay(const RGBImage& base, const ContourAnalysis& ca);
+RGBImage render_freeman_code_image(const ContourAnalysis& ca, int w, int h);

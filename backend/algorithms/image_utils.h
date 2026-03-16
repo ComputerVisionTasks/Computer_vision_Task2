@@ -57,3 +57,9 @@ RGBImage overlay_points(const RGBImage& img,
                         const std::vector<std::pair<float,float>>& pts,
                         unsigned char r, unsigned char g, unsigned char b,
                         int radius = 3);
+
+RGBImage overlay_connected_contour(const RGBImage& img,
+                                    const std::vector<std::pair<float,float>>& pts,
+                                    unsigned char r, unsigned char g, unsigned char b,
+                                    int thickness = 1,
+                                    bool show_points = true);

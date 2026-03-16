@@ -114,14 +114,14 @@ function initializeEventListeners() {
     // Snake
     const alpha = document.getElementById('alpha');
     const beta = document.getElementById('beta');
-    const gamma = document.getElementById('gamma');
+    const iterations = document.getElementById('iterations');
     const initSnakeBtn = document.getElementById('initSnake');
     const runSnakeBtn = document.getElementById('runSnake');
     const clearPointsBtn = document.getElementById('clearPoints');
     
     if (alpha) alpha.addEventListener('input', updateRangeDisplay);
     if (beta) beta.addEventListener('input', updateRangeDisplay);
-    if (gamma) gamma.addEventListener('input', updateRangeDisplay);
+    if (iterations) iterations.addEventListener('input', updateRangeDisplay);
     if (initSnakeBtn) initSnakeBtn.addEventListener('click', initializeSnake);
     if (runSnakeBtn) runSnakeBtn.addEventListener('click', runSnakeEvolution);
     if (clearPointsBtn) clearPointsBtn.addEventListener('click', clearSnakePoints);
@@ -278,11 +278,27 @@ async function handleFile(file) {
 // Update range input displays
 function updateRangeDisplay(e) {
     const id = e.target.id;
-    const value = e.target.value;
-    const displayId = id + 'Value';
-    const display = document.getElementById(displayId);
+    let value = parseFloat(e.target.value);
+    
+    // Format value appropriately
+    let displayValue;
+    if (id === 'iterations') {
+        displayValue = Math.round(value).toString(); // No decimal for iterations
+    } else {
+        displayValue = value.toFixed(2); // 2 decimals for alpha, beta, etc.
+    }
+    
+    // Look for badge format (e.g., 'alphaValueBadge' for 'alpha')
+    let display = document.getElementById(id + 'ValueBadge');
+    if (!display) {
+        display = document.getElementById(id + 'Badge'); // Fallback
+    }
+    if (!display) {
+        display = document.getElementById(id + 'Value'); // Fallback
+    }
+    
     if (display) {
-        display.textContent = value;
+        display.textContent = displayValue;
     }
 }
 
@@ -578,9 +594,9 @@ async function initializeSnake() {
     const formData = new FormData();
     formData.append('session_id', currentState.sessionId);
     formData.append('points', JSON.stringify(currentState.contourPoints));
-    formData.append('alpha', document.getElementById('alpha').value);
-    formData.append('beta', document.getElementById('beta').value);
-    formData.append('gamma', document.getElementById('gamma').value);
+    formData.append('alpha', document.getElementById('alpha').value || '0.5');
+    formData.append('beta', document.getElementById('beta').value || '0.5');
+    formData.append('gamma', '1.0');
 
     try {
         console.log('Initializing snake with', currentState.contourPoints.length, 'points');
@@ -689,7 +705,7 @@ async function analyzeContour() {
         
         const analysis = data.analysis;
 
-        // Update UI
+        // Update UI with metrics
         const perimeterValue = document.getElementById('perimeterValue');
         const areaValue = document.getElementById('areaValue');
         const numPointsValue = document.getElementById('numPointsValue');
@@ -702,8 +718,51 @@ async function analyzeContour() {
         if (closedValue) closedValue.textContent = analysis.is_closed ? 'Yes' : 'No';
         
         if (chainCodeBox) {
-            const chainCode = analysis.chain_code.join('');
-            chainCodeBox.innerHTML = chainCode || '<span class="text-muted">No chain code available</span>';
+            let chainCodeText = '';
+            if (Array.isArray(analysis.chain_code)) {
+                chainCodeText = analysis.chain_code.join('');
+            } else if (typeof analysis.chain_code === 'string') {
+                chainCodeText = analysis.chain_code;
+            }
+
+            if (chainCodeText.length > 0) {
+                chainCodeBox.textContent = chainCodeText;
+            } else if (analysis.chain_code_length && analysis.chain_code_length > 0) {
+                chainCodeBox.textContent = `${analysis.chain_code_length} codes`;
+            } else {
+                chainCodeBox.innerHTML = '<span class="text-muted">No chain code available (Initialize snake first)</span>';
+            }
+        }
+
+        // Freeman overlay image
+        if (data.freeman_overlay) {
+            const img = document.getElementById('freemanOverlay');
+            if (img) {
+                img.src = data.freeman_overlay;
+                img.style.display = 'block';
+                Array.from(img.parentElement.children).forEach(el => {
+                    if (el !== img && el.tagName !== 'IMG') el.style.display = 'none';
+                });
+            }
+        }
+
+        // Freeman direction image
+        if (data.freeman_code_image) {
+            const img = document.getElementById('freemanCodeImage');
+            if (img) {
+                img.src = data.freeman_code_image;
+                img.style.display = 'block';
+                Array.from(img.parentElement.children).forEach(el => {
+                    if (el !== img && el.tagName !== 'IMG') el.style.display = 'none';
+                });
+            }
+        }
+
+        // Also show contour overlay in processed preview for quick feedback
+        const processedPreview = document.getElementById('processedPreview');
+        if (processedPreview && data.freeman_overlay) {
+            processedPreview.src = data.freeman_overlay;
+            currentState.processedImage = data.freeman_overlay;
         }
 
         showToast('Analysis completed', 'success');

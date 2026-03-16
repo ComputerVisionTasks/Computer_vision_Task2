@@ -141,3 +141,57 @@ RGBImage overlay_points(const RGBImage& img,
     }
     return out;
 }
+
+// Draw a line using Bresenham's algorithm
+static void draw_line(RGBImage& img, int x0, int y0, int x1, int y1,
+                      unsigned char r, unsigned char g, unsigned char b, int thickness) {
+    int dx = std::abs(x1 - x0), dy = std::abs(y1 - y0);
+    int sx = (x0 < x1) ? 1 : -1, sy = (y0 < y1) ? 1 : -1;
+    int err = dx - dy;
+    int x = x0, y = y0;
+
+    while (true) {
+        // Draw point with thickness
+        for (int ty = -thickness; ty <= thickness; ty++) {
+            for (int tx = -thickness; tx <= thickness; tx++) {
+                img.set(x + tx, y + ty, r, g, b);
+            }
+        }
+        if (x == x1 && y == y1) break;
+        int e2 = 2 * err;
+        if (e2 > -dy) { err -= dy; x += sx; }
+        if (e2 < dx) { err += dx; y += sy; }
+    }
+}
+
+RGBImage overlay_connected_contour(const RGBImage& img,
+                                    const std::vector<std::pair<float,float>>& pts,
+                                    unsigned char r, unsigned char g, unsigned char b,
+                                    int thickness,
+                                    bool show_points) {
+    RGBImage out = img;
+    if (pts.size() < 2) return out;
+
+    // Draw line segments connecting consecutive points
+    for (size_t i = 0; i < pts.size(); i++) {
+        size_t j = (i + 1) % pts.size();
+        int x0 = (int)roundf(pts[i].first), y0 = (int)roundf(pts[i].second);
+        int x1 = (int)roundf(pts[j].first), y1 = (int)roundf(pts[j].second);
+        draw_line(out, x0, y0, x1, y1, r, g, b, thickness);
+    }
+
+    // Optionally overlay the control points
+    if (show_points) {
+        for (auto& pt : pts) {
+            int xi = (int)roundf(pt.first), yi = (int)roundf(pt.second);
+            for (int dy = -3; dy <= 3; dy++) {
+                for (int dx = -3; dx <= 3; dx++) {
+                    if (dx*dx + dy*dy <= 9)  // radius 3 circle
+                        out.set(xi + dx, yi + dy, 255, 255, 255);  // white points
+                }
+            }
+        }
+    }
+
+    return out;
+}

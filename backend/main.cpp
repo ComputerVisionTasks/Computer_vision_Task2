@@ -239,56 +239,85 @@ int main() {
         float beta  = std::stof(form_val(req, "beta",  "0.5"));
         float gamma = std::stof(form_val(req, "gamma", "1.0"));
 
+        std::cout << "[/snake/init] Received request. Session: " << sid << ", Points JSON length: " << ptsStr.length() << std::endl;
+
         std::lock_guard<std::mutex> lk(g_mutex);
         if (g_sessions.find(sid) == g_sessions.end()) {
+            std::cout << "[/snake/init] ERROR: Session not found" << std::endl;
             res.status = 404;
             res.set_content(json{{"error","session not found"}}.dump(), "application/json");
             return;
         }
         Session& s = g_sessions[sid];
-        json jp = json::parse(ptsStr);
-        std::vector<std::pair<float,float>> pts;
-        for (auto& p : jp) pts.push_back({p[0].get<float>(), p[1].get<float>()});
+        
+        try {
+            json jp = json::parse(ptsStr);
+            std::vector<std::pair<float,float>> pts;
+            for (auto& p : jp) pts.push_back({p[0].get<float>(), p[1].get<float>()});
+            
+            std::cout << "[/snake/init] Parsed " << pts.size() << " points. Image size: " << s.current.w << "x" << s.current.h << std::endl;
 
-        GrayImage gray = to_gray(s.current);
-        s.snake.init(gray, alpha, beta, gamma);
-        s.snake.setPoints(pts);
-        s.snakeInited = true;
+            GrayImage gray = to_gray(s.current);
+            s.snake.init(gray, alpha, beta, gamma);
+            s.snake.setPoints(pts);
+            s.snakeInited = true;
 
-        RGBImage ov = overlay_points(s.current, pts, 0, 255, 0);
-        json j;
-        j["success"] = true;
-        j["message"] = "Snake initialized";
-        j["num_points"] = (int)pts.size();
-        j["overlay"] = rgb_to_base64_png(ov);
-        res.set_content(j.dump(), "application/json");
+            RGBImage ov = overlay_connected_contour(s.current, pts, 0, 255, 0, 1, true);
+            std::cout << "[/snake/init] Overlay created: " << ov.w << "x" << ov.h << std::endl;
+            
+            std::string b64 = rgb_to_base64_png(ov);
+            std::cout << "[/snake/init] Base64 PNG length: " << b64.length() << std::endl;
+            
+            json j;
+            j["success"] = true;
+            j["message"] = "Snake initialized";
+            j["num_points"] = (int)pts.size();
+            j["overlay"] = b64;
+            res.set_content(j.dump(), "application/json");
+        } catch (const std::exception& e) {
+            std::cout << "[/snake/init] ERROR: " << e.what() << std::endl;
+            res.status = 400;
+            res.set_content(json{{"error", e.what()}}.dump(), "application/json");
+        }
     });
 
     svr.Post("/snake/evolve", [](const httplib::Request& req, httplib::Response& res) {
         auto sid = req.form.get_field("session_id");
+        int iterations = std::stoi(form_val(req, "iterations", "100"));
+        std::cout << "[/snake/evolve] Received request. Session: " << sid << std::endl;
+        
         std::lock_guard<std::mutex> lk(g_mutex);
         if (g_sessions.find(sid) == g_sessions.end()) {
+            std::cout << "[/snake/evolve] ERROR: Session not found" << std::endl;
             res.status = 404;
             res.set_content(json{{"error","session not found"}}.dump(), "application/json");
             return;
         }
         Session& s = g_sessions[sid];
         if (!s.snakeInited) {
+            std::cout << "[/snake/evolve] ERROR: Snake not initialized" << std::endl;
             res.status = 400;
             res.set_content(json{{"error","snake not initialized"}}.dump(), "application/json");
             return;
         }
-        auto history = s.snake.evolve();
+        auto history = s.snake.evolve(iterations);
         auto& contour = s.snake.points;
+        
+        std::cout << "[/snake/evolve] Contour has " << contour.size() << " points, " << history.size() << " iterations" << std::endl;
 
-        RGBImage ov = overlay_points(s.current, contour, 0, 255, 255, 2);
+        RGBImage ov = overlay_connected_contour(s.current, contour, 0, 255, 255, 1, true);
+        std::cout << "[/snake/evolve] Overlay created: " << ov.w << "x" << ov.h << std::endl;
+        
         json jc = json::array();
         for (auto& p : contour) jc.push_back({(int)roundf(p.first), (int)roundf(p.second)});
 
+        std::string b64 = rgb_to_base64_png(ov);
+        std::cout << "[/snake/evolve] Base64 PNG length: " << b64.length() << std::endl;
+        
         json j;
         j["success"] = true;
         j["contour"] = jc;
-        j["overlay"] = rgb_to_base64_png(ov);
+        j["overlay"] = b64;
         j["iterations"] = (int)history.size();
         j["history_length"] = (int)history.size();
         res.set_content(j.dump(), "application/json");
@@ -329,9 +358,92 @@ int main() {
             return;
         }
         Session& s = g_sessions[sid];
-        GrayImage gray = to_gray(s.current);
-        GrayImage edges = canny(gray, 1.0f, 0.05f, 0.15f);
-        auto ca = analyze_contour(edges);
+        
+        std::cout << "[/analyze-contour] Processing analysis. Snake initialized: " << s.snakeInited << std::endl;
+        
+        // Use snake boundary if available, otherwise use Canny
+        ContourAnalysis ca;
+        RGBImage freedmanBaseImage = s.current;
+        
+        if (s.snakeInited && s.snake.points.size() >= 3) {
+            std::cout << "[/analyze-contour] Using snake contour with " << s.snake.points.size() << " points" << std::endl;
+            // Analyze from snake contour
+            auto snakePts = s.snake.points;
+            std::vector<std::pair<int,int>> intPts;
+            for (auto& p : snakePts) {
+                intPts.push_back({(int)roundf(p.first), (int)roundf(p.second)});
+            }
+            ca.boundary = intPts;
+            ca.numPoints = (int)intPts.size();
+            ca.isClosed = true;
+            
+            // Calculate perimeter and area from snake points
+            float perim = 0;
+            for (size_t i = 0; i < snakePts.size(); i++) {
+                size_t j = (i + 1) % snakePts.size();
+                float dx = snakePts[j].first - snakePts[i].first;
+                float dy = snakePts[j].second - snakePts[i].second;
+                perim += sqrtf(dx*dx + dy*dy);
+            }
+            ca.perimeter = perim;
+            
+            // Area via shoelace
+            float a = 0;
+            for (size_t i = 0; i < intPts.size(); i++) {
+                size_t j = (i + 1) % intPts.size();
+                a += intPts[i].first * intPts[j].second - intPts[j].first * intPts[i].second;
+            }
+            ca.area = fabsf(a) / 2.0f;
+            
+            // Compute Freeman chain code from boundary points
+            const int ddx[] = {1, 1, 0, -1, -1, -1, 0, 1};
+            const int ddy[] = {0, 1, 1, 1, 0, -1, -1, -1};
+            
+            for (size_t i = 0; i < intPts.size(); i++) {
+                size_t j = (i + 1) % intPts.size();
+                int x0 = intPts[i].first, y0 = intPts[i].second;
+                int x1 = intPts[j].first, y1 = intPts[j].second;
+                int dx = x1 - x0, dy = y1 - y0;
+                int steps = std::max(std::abs(dx), std::abs(dy));
+                if (steps > 0) {
+                    for (int s = 0; s < steps; s++) {
+                        int cx = x0 + (dx * s) / steps;
+                        int cy = y0 + (dy * s) / steps;
+                        int nx = x0 + (dx * (s + 1)) / steps;
+                        int ny = y0 + (dy * (s + 1)) / steps;
+                        
+                        int dirDx = nx - cx;
+                        int dirDy = ny - cy;
+                        
+                        // Find direction code
+                        for (int d = 0; d < 8; d++) {
+                            if (ddx[d] == dirDx && ddy[d] == dirDy) {
+                                ca.chainCode.push_back(d);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            std::cout << "[/analyze-contour] Computed chain code with " << ca.chainCode.size() << " codes" << std::endl;
+        } else {
+            std::cout << "[/analyze-contour] Using Canny edges (snake not initialized)" << std::endl;
+            // Use Canny edges
+            GrayImage gray = to_gray(s.current);
+            GrayImage edges = canny(gray, 1.0f, 0.05f, 0.15f);
+            ca = analyze_contour(edges);
+        }
+
+        // Render Freeman visualizations
+        RGBImage freemanOverlay = render_freeman_overlay(s.current, ca);
+        RGBImage freemanCodeImg = render_freeman_code_image(ca, s.current.w, s.current.h);
+
+        // Build chain code string
+        std::string chainCodeStr;
+        for (int code : ca.chainCode) {
+            chainCodeStr += std::to_string(code);
+        }
 
         json jb = json::array();
         for (auto& p : ca.boundary) jb.push_back({p.first, p.second});
@@ -340,12 +452,15 @@ int main() {
         j["success"] = true;
         j["analysis"] = {
             {"boundary", jb},
-            {"chain_code", ca.chainCode},
+            {"chain_code", chainCodeStr},
+            {"chain_code_length", (int)ca.chainCode.size()},
             {"perimeter", ca.perimeter},
             {"area", ca.area},
             {"num_points", ca.numPoints},
             {"is_closed", ca.isClosed}
         };
+        j["freeman_overlay"] = rgb_to_base64_png(freemanOverlay);
+        j["freeman_code_image"] = rgb_to_base64_png(freemanCodeImg);
         res.set_content(j.dump(), "application/json");
     });
 

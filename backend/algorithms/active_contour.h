@@ -16,6 +16,6 @@ struct Snake {
 
     void init(const GrayImage& gray, float a, float b, float g);
     void setPoints(const std::vector<std::pair<float,float>>& pts);
-    std::vector<std::vector<std::pair<float,float>>> evolve();
+    std::vector<std::vector<std::pair<float,float>>> evolve(int iterations = -1);
     void reset();
 };

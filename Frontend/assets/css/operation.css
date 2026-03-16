@@ -1171,4 +1171,266 @@
   }
 }
 
+/* ========== Analysis Tab Styling ========== */
+
+.analysis-card {
+  background: linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  border: 1px solid var(--operation-border);
+  border-radius: 8px;
+  padding: 1.2rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.analysis-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(39, 167, 118, 0.1), transparent);
+  transition: left 0.7s ease;
+}
+
+.analysis-card:hover {
+  border-color: var(--operation-accent);
+  transform: translateY(-2px);
+}
+
+.analysis-card:hover::before {
+  left: 100%;
+}
+
+.analysis-title {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 1.2rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 2px solid var(--operation-accent);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.analysis-title i {
+  color: var(--operation-accent);
+  font-size: 1.1rem;
+}
+
+/* Metric Display Cards */
+.metric-display {
+  background: rgba(39, 167, 118, 0.05);
+  border: 1px solid var(--operation-border);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.metric-display:hover {
+  background: rgba(39, 167, 118, 0.1);
+  border-color: var(--operation-accent);
+  transform: translateY(-2px);
+}
+
+.metric-label {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.metric-value {
+  color: var(--operation-accent);
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  line-height: 1.2;
+  margin-bottom: 0.4rem;
+  font-family: 'Roboto Mono', monospace;
+}
+
+.metric-unit {
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  display: block;
+  font-weight: 400;
+}
+
+/* Chain Code Box */
+.chain-code-box {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--operation-border);
+  border-radius: 6px;
+  padding: 1rem;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--operation-accent);
+  word-break: break-all;
+  max-height: 200px;
+  overflow-y: auto;
+  line-height: 1.6;
+  text-align: center;
+  letter-spacing: 0.1em;
+}
+
+.chain-code-box::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chain-code-box::-webkit-scrollbar-track {
+  background: var(--operation-border);
+}
+
+.chain-code-box::-webkit-scrollbar-thumb {
+  background: var(--operation-accent);
+  border-radius: 3px;
+}
+
+/* Freeman Image Cards */
+.image-card {
+  padding: 0.8rem;
+}
+
+.analysis-image-box {
+  width: 100%;
+  border: 1px solid var(--operation-border);
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--operation-card-bg-light), var(--operation-card-bg));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.analysis-image-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.analysis-image-box small {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+/* Freeman color legend */
+.freeman-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  font-size: 0.7rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+  border: 1px solid var(--operation-border);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.legend-text {
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Larger value badges for active contour */
+.value-badge {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
+}
+
+#alphaValueBadge,
+#betaValueBadge,
+#iterationsValueBadge {
+  font-size: 0.8rem;
+}
+
+/* Make metrics noticeably larger */
+#perimeterValue,
+#areaValue {
+  font-size: 2.2rem;
+  color: var(--operation-accent);
+  font-weight: 700;
+}
+
+#numPointsValue,
+#closedValue {
+  font-size: 1.8rem;
+  color: var(--operation-accent);
+  font-weight: 700;
+}
+
+/* Mobile responsive for analysis */
+@media (max-width: 992px) {
+  .metric-display {
+    padding: 0.8rem;
+    border-radius: 6px;
+  }
+  
+  .metric-value {
+    font-size: 1.5rem;
+  }
+  
+  .analysis-card {
+    padding: 1rem;
+  }
+  
+  .analysis-title {
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.6rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .metric-value {
+    font-size: 1.3rem;
+  }
+  
+  .metric-label {
+    font-size: 0.7rem;
+  }
+  
+  .chain-code-box {
+    font-size: 0.7rem;
+    padding: 0.75rem;
+    max-height: 150px;
+  }
+  
+  .analysis-card {
+    padding: 0.8rem;
+  }
+  
+  .analysis-image-box {
+    height: 150px;
+  }
+}
+
 
