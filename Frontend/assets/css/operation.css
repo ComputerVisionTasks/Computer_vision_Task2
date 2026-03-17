@@ -1107,6 +1107,126 @@
   font-size: 0.55rem; /* Reduced from 0.6rem */
 }
 
+/* Shape tab: themed type labels + button positioning */
+.shape-type-row {
+  margin-bottom: 0.35rem;
+}
+
+.shape-type-check {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--operation-border);
+  border-radius: 10px;
+  padding: 0.5rem 0.65rem;
+  min-height: 58px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.shape-type-check:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.shape-type-check .form-check-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100%;
+  cursor: pointer;
+}
+
+.shape-type-check .form-check-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.shape-type-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.shape-type-tag {
+  width: fit-content;
+  padding: 0.16rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.35px;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.shape-type-lines {
+  color: #ff6b6b;
+}
+
+.shape-type-tag.shape-type-lines {
+  color: #ff7f7f;
+  background: rgba(255, 107, 107, 0.15);
+  border-color: rgba(255, 107, 107, 0.4);
+}
+
+.shape-type-circles {
+  color: #5fe2bf;
+}
+
+.shape-type-tag.shape-type-circles {
+  color: #5fe2bf;
+  background: rgba(95, 226, 191, 0.15);
+  border-color: rgba(95, 226, 191, 0.4);
+}
+
+.shape-type-ellipses {
+  color: #4da8ff;
+}
+
+.shape-type-tag.shape-type-ellipses {
+  color: #4da8ff;
+  background: rgba(77, 168, 255, 0.15);
+  border-color: rgba(77, 168, 255, 0.4);
+}
+
+.shape-type-check.is-selected {
+  border-color: rgba(255, 255, 255, 0.34);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05);
+}
+
+.shape-card-lines.is-selected {
+  border-color: rgba(255, 107, 107, 0.55);
+  box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.18);
+}
+
+.shape-card-circles.is-selected {
+  border-color: rgba(95, 226, 191, 0.55);
+  box-shadow: 0 0 0 2px rgba(95, 226, 191, 0.18);
+}
+
+.shape-card-ellipses.is-selected {
+  border-color: rgba(77, 168, 255, 0.55);
+  box-shadow: 0 0 0 2px rgba(77, 168, 255, 0.18);
+}
+
+.shape-action-column {
+  justify-content: flex-end;
+  padding-top: 0.5rem;
+}
+
+.shape-detect-container {
+  margin-top: 0.25rem;
+  transform: translateY(-18px);
+}
+
+@media (max-width: 768px) {
+  .shape-detect-container {
+    transform: none;
+    margin-top: 0.35rem;
+  }
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .slider-card {

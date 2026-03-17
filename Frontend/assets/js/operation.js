@@ -110,6 +110,7 @@ function initializeEventListeners() {
     if (lineThreshold) lineThreshold.addEventListener('input', updateRangeDisplay);
     if (ellipseTolerance) ellipseTolerance.addEventListener('input', updateRangeDisplay);
     if (detectShapesBtn) detectShapesBtn.addEventListener('click', detectShapes);
+    initShapeTypeToggles();
 
     // Snake
     const alpha = document.getElementById('alpha');
@@ -140,6 +141,32 @@ function initializeEventListeners() {
     }
 
     console.log('Event listeners initialized');
+}
+
+function initShapeTypeToggles() {
+    const shapeInputs = [
+        document.getElementById('detectLines'),
+        document.getElementById('detectCircles'),
+        document.getElementById('detectEllipses')
+    ].filter(Boolean);
+
+    shapeInputs.forEach(input => {
+        const card = input.closest('.shape-type-check');
+        if (!card) return;
+
+        const refreshCardState = () => {
+            card.classList.toggle('is-selected', input.checked);
+        };
+
+        refreshCardState();
+        input.addEventListener('change', refreshCardState);
+
+        card.addEventListener('click', (event) => {
+            if (event.target === input || event.target.closest('label')) return;
+            input.checked = !input.checked;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+    });
 }
 
 // Disable/enable all operation buttons

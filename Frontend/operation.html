@@ -305,39 +305,49 @@
                 <div class="tab-pane fade" id="shape" role="tabpanel" aria-labelledby="shape-tab">
                   <div class="row">
                     <div class="col-md-8">
-                      <div class="row">
+                      <div class="row shape-type-row">
                         <div class="col-md-4">
-                          <div class="form-check">
+                          <div class="form-check shape-type-check shape-card-lines">
                             <input class="form-check-input" type="checkbox" id="detectLines" checked>
                             <label class="form-check-label" for="detectLines">
-                              Lines <span class="badge bg-primary">Blue</span>
+                              <span class="shape-type-label shape-type-lines">Lines</span>
+                              <span class="shape-type-tag shape-type-lines">Red</span>
                             </label>
                           </div>
                         </div>
                         <div class="col-md-4">
-                          <div class="form-check">
+                          <div class="form-check shape-type-check shape-card-circles">
                             <input class="form-check-input" type="checkbox" id="detectCircles" checked>
                             <label class="form-check-label" for="detectCircles">
-                              Circles <span class="badge bg-success">Green</span>
+                              <span class="shape-type-label shape-type-circles">Circles</span>
+                              <span class="shape-type-tag shape-type-circles">Mint Green</span>
                             </label>
                           </div>
                         </div>
                         <div class="col-md-4">
-                          <div class="form-check">
+                          <div class="form-check shape-type-check shape-card-ellipses">
                             <input class="form-check-input" type="checkbox" id="detectEllipses" checked>
                             <label class="form-check-label" for="detectEllipses">
-                              Ellipses <span class="badge bg-danger">Red</span>
+                              <span class="shape-type-label shape-type-ellipses">Ellipses</span>
+                              <span class="shape-type-tag shape-type-ellipses">Blue</span>
                             </label>
                           </div>
                         </div>
                       </div>
 
-                      <div class="form-group mt-3">
-                        <label class="form-label">
-                          Line Threshold <span class="value-display" id="lineThresholdValue">50</span>
-                        </label>
-                        <input type="range" class="form-range" id="lineThreshold" min="10" max="200" step="5"
-                          value="50">
+                      <div class="slider-card mt-3">
+                        <div class="slider-header">
+                          <span class="slider-title">Line Threshold</span>
+                          <span class="value-badge" id="lineThresholdValue">50</span>
+                        </div>
+                        <div class="slider-container">
+                          <input type="range" class="form-range custom-slider" id="lineThreshold" min="10" max="200" step="5" value="50">
+                          <div class="slider-labels">
+                            <span>10</span>
+                            <span>105</span>
+                            <span>200</span>
+                          </div>
+                        </div>
                       </div>
 
                       <div class="row mt-3">
@@ -351,15 +361,39 @@
                         </div>
                       </div>
 
-                      <div class="form-group mt-3">
-                        <label class="form-label">
-                          Ellipse Tolerance <span class="value-display" id="ellipseToleranceValue">0.1</span>
-                        </label>
-                        <input type="range" class="form-range" id="ellipseTolerance" min="0.01" max="0.5" step="0.01"
-                          value="0.1">
+                      <div class="slider-card mt-3">
+                        <div class="slider-header">
+                          <span class="slider-title">Ellipse Tolerance</span>
+                          <span class="value-badge" id="ellipseToleranceValue">0.1</span>
+                        </div>
+                        <div class="slider-container">
+                          <input type="range" class="form-range custom-slider" id="ellipseTolerance" min="0.01" max="0.5" step="0.01" value="0.1">
+                          <div class="slider-labels">
+                            <span>0.01</span>
+                            <span>0.25</span>
+                            <span>0.5</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div class="col-md-4 d-flex flex-column justify-content-end">
+                    <div class="col-md-4 d-flex flex-column shape-action-column">
+                      <div class="run-button-container shape-detect-container">
+                        <button class="btn run-button" id="detectShapes" type="button" disabled>
+                          <div class="button-content">
+                            <i class="bi bi-bullseye button-icon"></i>
+                            <div class="button-text">
+                              <span class="button-title">Detect Shapes</span>
+                              <span class="button-subtitle">Lines, Circles, Ellipses</span>
+                            </div>
+                          </div>
+                          <div class="button-shine"></div>
+                        </button>
+                        <div class="button-hint">
+                          <i class="bi bi-stars"></i>
+                          <small>Find geometric structures</small>
+                        </div>
+                      </div>
+
                       <!-- Permanent Shape Results Display (Moved here from PROCESSED pane) -->
                       <div id="permanentShapeResults" class="mb-3 p-3 rounded w-100" style="display: none; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); flex-grow: 1;">
                         <h6 class="text-white mb-3" style="font-size: 0.85rem;"><i class="bi bi-bullseye me-2"></i>Detection Status</h6>
@@ -367,10 +401,6 @@
                           <span class="text-muted" style="font-size: 0.85rem;">Ready to detect...</span>
                         </div>
                       </div>
-                      
-                      <button class="btn btn-primary w-100 mt-auto" id="detectShapes" type="button" disabled>
-                        Detect Shapes
-                      </button>
                     </div>
                   </div>
                 </div>
