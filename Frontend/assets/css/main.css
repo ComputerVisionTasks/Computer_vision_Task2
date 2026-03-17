@@ -1147,192 +1147,127 @@ section,
   padding: 0;
 }
 
-/*--------------------------------------------------------------
-# Services Section
---------------------------------------------------------------*/
-.services .service-item {
-  background-color: var(--surface-color);
-  padding: 50px 30px;
-  transition: all 0.3s ease-in-out;
-  height: 100%;
-  position: relative;
-  z-index: 1;
-}
 
-.services .service-item:before {
-  content: "";
-  position: absolute;
-  background: var(--accent-color);
-  inset: 100% 0 0 0;
-  transition: all 0.3s;
-  z-index: -1;
-}
 
-.services .service-item .icon {
-  margin-bottom: 15px;
-}
 
-.services .service-item .icon i {
-  color: var(--default-color);
-  background-color: var(--accent-color);
-  font-size: 24px;
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: ease-in-out 0.3s;
-}
 
-.services .service-item h4 {
-  font-weight: 700;
-  margin-bottom: 15px;
-  font-size: 20px;
-  font-family: var(--default-font);
-}
 
-.services .service-item h4 a {
-  color: var(--heading-color);
-  transition: ease-in-out 0.3s;
-}
 
-.services .service-item p {
-  line-height: 24px;
-  font-size: 14px;
-  margin-bottom: 0;
-  transition: ease-in-out 0.3s;
-}
 
-.services .service-item:hover h4 a,
-.services .service-item:hover p {
-  color: var(--default-color);
-}
 
-.services .service-item:hover i {
-  color: var(--accent-color);
-  background-color: var(--default-color);
-}
 
-.services .service-item:hover:before {
-  background: var(--accent-color);
-  inset: 0;
-  border-radius: 0px;
-}
 
-/*--------------------------------------------------------------
-# Pricing Section
---------------------------------------------------------------*/
-.pricing .pricing-item {
-  border-bottom: 1px dashed color-mix(in srgb, var(--default-color), transparent 60%);
-  width: 100%;
-  height: 100%;
-  padding: 0 0 15px 0;
-}
+/* Enhanced Animated Heading with Space Grotesk */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
-.pricing .pricing-item h3 {
-  margin: 0;
-  font-size: 20px;
+.animated-heading {
+  /* Font Family */
+  font-family: 'Space Grotesk', sans-serif;
+  
+  /* Font Size - Fluid for responsiveness */
+  font-size: clamp(2.2rem, 8vw, 3.5rem);
+  
+  /* Font Weight - Use 600 for a strong presence */
   font-weight: 600;
+  
+  /* Line Height - Tighter for headings */
+  line-height: 1.1;
+  
+  /* Letter Spacing - Slightly tighter for this font's geometric style */
+  letter-spacing: -0.02em;
+  
+  /* Text Transform - Uppercase for impact (optional) */
+  /* text-transform: uppercase; */
+  
+  /* Margins */
+  margin-bottom: 1.5rem;
+  
+  /* Alignment */
+  text-align: center;
+  
+  /* Premium Text Rendering */
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.pricing .pricing-item h4 {
-  margin: 0;
-  font-size: 18px;
-  color: var(--accent-color);
+.word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.5s ease forwards;
+  
+  /* Optional: Add character spacing variation */
+  font-kerning: normal;
 }
 
-/*--------------------------------------------------------------
-# Contact Section
---------------------------------------------------------------*/
-.contact .info-wrap {
-  margin-bottom: 30px;
+/* Typographic Variations for Each Word */
+.word-1 {
+  animation-delay: 0.1s;
+  font-weight: 700; /* Bolder for emphasis */
+  background: linear-gradient(135deg, #27a776, #1e8a5f);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.contact .info-item i {
-  font-size: 20px;
-  color: var(--accent-color);
-  width: 56px;
-  height: 56px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transition: all 0.3s ease-in-out;
-  border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--accent-color), transparent 40%);
-  margin-right: 15px;
+.word-2 {
+  animation-delay: 0.3s;
+  color: #ffffff;
+  font-weight: 500;
+  /* Add a subtle outline or shadow */
+  text-shadow: 0 0 1px rgba(255,255,255,0.5);
 }
 
-.contact .info-item h3 {
-  font-size: 18px;
+.word-3 {
+  animation-delay: 0.5s;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 400; /* Lighter weight */
+  font-style: italic;
+  /* Use font feature for nicer italics if available */
+  font-feature-settings: "salt" on;
+}
+
+.word-4 {
+  animation-delay: 0.7s;
   font-weight: 700;
-  margin: 0 0 5px 0;
-  font-family: var(--default-font);
+  background: linear-gradient(135deg, #ffffff, #27a776);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+  /* Make it stand out more */
+  letter-spacing: -0.01em;
 }
 
-.contact .info-item p {
-  padding: 0;
-  margin-bottom: 0;
-  font-size: 14px;
+.word-4::after {
+  content: '';
+  position: absolute;
+  bottom: -8px; /* Slightly lower */
+  left: 0;
+  width: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #27a776, #aff1dd, transparent); /* Slightly more colorful */
+  border-radius: 2px;
+  animation: expandLine 0.5s ease forwards 1s;
 }
 
-.contact .info-item:hover i {
-  background: var(--accent-color);
-  color: var(--contrast-color);
-}
-
-@media (max-width: 575px) {
-  .contact .php-email-form {
-    padding: 20px;
+/* Animations */
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-.contact .php-email-form input[type=text],
-.contact .php-email-form input[type=email],
-.contact .php-email-form textarea {
-  font-size: 14px;
-  padding: 10px 15px;
-  box-shadow: none;
-  border-radius: 0;
-  color: var(--default-color);
-  background-color: var(--surface-color);
-  border-color: color-mix(in srgb, var(--default-color), transparent 80%);
+@keyframes expandLine {
+  to {
+    width: 100%;
+  }
 }
 
-.contact .php-email-form input[type=text]:focus,
-.contact .php-email-form input[type=email]:focus,
-.contact .php-email-form textarea:focus {
-  border-color: var(--accent-color);
-}
-
-.contact .php-email-form input[type=text]::placeholder,
-.contact .php-email-form input[type=email]::placeholder,
-.contact .php-email-form textarea::placeholder {
-  color: color-mix(in srgb, var(--default-color), transparent 70%);
-}
-
-.contact .php-email-form button[type=submit] {
-  color: var(--default-color);
-  background: var(--accent-color);
-  font-weight: 400;
-  font-size: 14px;
-  display: inline-block;
-  margin-top: 20px;
-  padding: 14px 40px;
-  border: 0;
-  border-radius: 4px;
-  transition: 0.5s;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.contact .php-email-form button[type=submit]:hover {
-  background-color: color-mix(in srgb, var(--accent-color) 90%, white 10%);
-}
-
-/*--------------------------------------------------------------
-# Starter Section Section
---------------------------------------------------------------*/
-.starter-section {
-  /* Add your styles here */
+/* Optional: Hover effect for the whole heading */
+.animated-heading:hover .word-4::after {
+  height: 4px;
+  transition: height 0.2s ease;
 }
