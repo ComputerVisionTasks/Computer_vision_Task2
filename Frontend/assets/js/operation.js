@@ -378,16 +378,35 @@ async function detectShapes() {
     }
 
     try {
-        let overlayImage = null;
+        // To render multiple shapes without backend overwrite issues, we'll draw them on a Canvas
+        // using the math data returned by the backend.
+        
+        // 1. Get the original image to draw on
+        const baseImg = new Image();
+        
+        // Wait for image to load before drawing
+        await new Promise((resolve, reject) => {
+            baseImg.onload = resolve;
+            baseImg.onerror = reject;
+            baseImg.src = currentState.originalImage;
+        });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = baseImg.width;
+        canvas.height = baseImg.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(baseImg, 0, 0);
+
+        let shapesDetected = false;
         const results = {};
 
         // Detect Lines
         if (detectLines) {
+            showLoading('Detecting lines...');
             const lineFormData = new FormData();
             lineFormData.append('session_id', currentState.sessionId);
             lineFormData.append('threshold', document.getElementById('lineThreshold').value);
 
-            console.log('Detecting lines...');
             const lineResponse = await fetch(`${API_BASE_URL}/hough-lines`, {
                 method: 'POST',
                 body: lineFormData
@@ -395,20 +414,38 @@ async function detectShapes() {
 
             if (lineResponse.ok) {
                 const lineData = await lineResponse.json();
-                overlayImage = lineData.overlay;
                 results.lines = lineData.num_lines;
-                console.log(`Found ${lineData.num_lines} lines`);
+                shapesDetected = true;
+                
+                // Draw lines in RED
+                ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+                ctx.lineWidth = 2;
+                const span = Math.max(canvas.width, canvas.height) * 2;
+                for (const l of lineData.lines || []) {
+                    const r = l[0], t = l[1]; // rho, theta
+                    const ca = Math.cos(t), sa = Math.sin(t);
+                    const x0 = ca * r, y0 = sa * r;
+                    const x1 = Math.round(x0 + span * (-sa));
+                    const y1 = Math.round(y0 + span * (ca));
+                    const x2 = Math.round(x0 - span * (-sa));
+                    const y2 = Math.round(y0 - span * (ca));
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.stroke();
+                }
             }
         }
 
         // Detect Circles
         if (detectCircles) {
+            showLoading('Detecting circles...');
             const circleFormData = new FormData();
             circleFormData.append('session_id', currentState.sessionId);
             circleFormData.append('radius_min', document.getElementById('minRadius').value);
             circleFormData.append('radius_max', document.getElementById('maxRadius').value);
 
-            console.log('Detecting circles...');
             const circleResponse = await fetch(`${API_BASE_URL}/hough-circles`, {
                 method: 'POST',
                 body: circleFormData
@@ -416,21 +453,29 @@ async function detectShapes() {
 
             if (circleResponse.ok) {
                 const circleData = await circleResponse.json();
-                overlayImage = circleData.overlay;
                 results.circles = circleData.num_circles;
-                console.log(`Found ${circleData.num_circles} circles`);
+                shapesDetected = true;
+
+                // Draw circles in GREEN
+                ctx.strokeStyle = 'rgba(0, 255, 0, 0.8)';
+                ctx.lineWidth = 3;
+                for (const c of circleData.circles || []) {
+                    ctx.beginPath();
+                    ctx.arc(c[0], c[1], c[2], 0, 2 * Math.PI);
+                    ctx.stroke();
+                }
             }
         }
 
         // Detect Ellipses
         if (detectEllipses) {
+            showLoading('Detecting ellipses...');
             const ellipseFormData = new FormData();
             ellipseFormData.append('session_id', currentState.sessionId);
             ellipseFormData.append('tolerance', document.getElementById('ellipseTolerance').value);
             ellipseFormData.append('min_area', 100);
             ellipseFormData.append('max_area', 10000);
 
-            console.log('Detecting ellipses...');
             const ellipseResponse = await fetch(`${API_BASE_URL}/detect-ellipses`, {
                 method: 'POST',
                 body: ellipseFormData
@@ -438,28 +483,53 @@ async function detectShapes() {
 
             if (ellipseResponse.ok) {
                 const ellipseData = await ellipseResponse.json();
-                overlayImage = ellipseData.overlay;
                 results.ellipses = ellipseData.num_ellipses;
-                console.log(`Found ${ellipseData.num_ellipses} ellipses`);
+                shapesDetected = true;
+
+                // Draw ellipses in BLUE
+                ctx.strokeStyle = 'rgba(0, 0, 255, 0.8)';
+                ctx.lineWidth = 3;
+                for (const e of ellipseData.ellipses || []) {
+                    ctx.beginPath();
+                    ctx.ellipse(e.x, e.y, e.a, e.b, e.angle, 0, 2 * Math.PI);
+                    ctx.stroke();
+                }
             }
         }
 
-        // Update image
-        if (overlayImage) {
-            currentState.processedImage = overlayImage;
+        // Update image if we drew anything
+        if (shapesDetected) {
+            const finalImgData = canvas.toDataURL('image/png');
+            currentState.processedImage = finalImgData;
             const processedPreview = document.getElementById('processedPreview');
             if (processedPreview) {
-                processedPreview.src = overlayImage;
+                processedPreview.src = finalImgData;
             }
         }
 
         // Show results message
         let message = 'Detection completed: ';
         const parts = [];
-        if (results.lines) parts.push(`${results.lines} lines`);
-        if (results.circles) parts.push(`${results.circles} circles`);
-        if (results.ellipses) parts.push(`${results.ellipses} ellipses`);
-        message += parts.join(', ');
+        if (results.lines !== undefined) parts.push(`<span class="badge bg-primary px-3 py-2"><i class="bi bi-slash-lg me-1"></i>${results.lines} Lines</span>`);
+        if (results.circles !== undefined) parts.push(`<span class="badge bg-success px-3 py-2"><i class="bi bi-circle me-1"></i>${results.circles} Circles</span>`);
+        if (results.ellipses !== undefined) parts.push(`<span class="badge bg-danger px-3 py-2"><i class="bi bi-egg me-1"></i>${results.ellipses} Ellipses</span>`);
+        
+        const permanentCounts = document.getElementById('permanentShapeCounts');
+        const permanentResults = document.getElementById('permanentShapeResults');
+        
+        if (permanentCounts && permanentResults) {
+            if (parts.length === 0) {
+                permanentCounts.innerHTML = '<span class="text-muted" style="font-size: 0.85rem;">No shapes detected.</span>';
+                message = 'No shapes detected.';
+            } else {
+                permanentCounts.innerHTML = parts.join('');
+            }
+            permanentResults.style.display = 'block';
+        }
+        
+        // Ensure old shapeResults is removed to avoid duplicates if it exists
+        const oldTarget = document.getElementById('shapeResults');
+        if (oldTarget) oldTarget.remove();
         
         showToast(message, 'success');
 
@@ -955,6 +1025,26 @@ function showLoading(message = 'Loading...') {
     // Remove existing overlay if any
     hideLoading();
     
+    // Check if we can show this inside the permanent Shape Results box
+    const permanentCounts = document.getElementById('permanentShapeCounts');
+    const permanentResults = document.getElementById('permanentShapeResults');
+    const shapeTabActive = document.getElementById('shape-tab') && document.getElementById('shape-tab').classList.contains('active');
+    
+    if (shapeTabActive && permanentCounts && permanentResults) {
+        permanentResults.style.display = 'block';
+        permanentCounts.innerHTML = `
+            <div class="d-flex align-items-center text-info">
+                <div class="spinner-border spinner-border-sm me-2" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <span>${message}</span>
+            </div>
+        `;
+        // We add a marker to know it's a localized loader
+        permanentCounts.dataset.isLoading = "true";
+        return;
+    }
+    
     const overlay = document.createElement('div');
     overlay.className = 'spinner-overlay';
     overlay.id = 'loadingOverlay';
@@ -969,6 +1059,17 @@ function showLoading(message = 'Loading...') {
 
 // Hide loading overlay
 function hideLoading() {
+    // Hide localized Shape Results loader if active
+    const permanentCounts = document.getElementById('permanentShapeCounts');
+    if (permanentCounts && permanentCounts.dataset.isLoading === "true") {
+        delete permanentCounts.dataset.isLoading;
+        // Only reset to "Ready to detect..." if we haven't already populated shapes into it
+        if (permanentCounts.innerHTML.includes('Loading...')) {
+            permanentCounts.innerHTML = '<span class="text-muted" style="font-size: 0.85rem;">Ready to detect...</span>';
+        }
+    }
+
+    // Hide fullscreen overlay if active
     const overlay = document.getElementById('loadingOverlay');
     if (overlay) {
         overlay.remove();

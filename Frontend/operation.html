@@ -141,7 +141,6 @@
                       <i class="bi bi-magic me-2"></i>
                       <h5 class="preview-title ultra-compact mb-0">PROCESSED</h5>
                     </div>
-                    <span class="badge bg-success ultra-compact" id="processInfo" style="display: none;">Ready</span>
                   </div>
                   <div class="preview-body ultra-compact">
                     <div class="placeholder-container ultra-compact" id="processedPlaceholder">
@@ -360,8 +359,16 @@
                           value="0.1">
                       </div>
                     </div>
-                    <div class="col-md-4 d-flex align-items-end">
-                      <button class="btn btn-primary w-100" id="detectShapes" type="button" disabled>
+                    <div class="col-md-4 d-flex flex-column justify-content-end">
+                      <!-- Permanent Shape Results Display (Moved here from PROCESSED pane) -->
+                      <div id="permanentShapeResults" class="mb-3 p-3 rounded w-100" style="display: none; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); flex-grow: 1;">
+                        <h6 class="text-white mb-3" style="font-size: 0.85rem;"><i class="bi bi-bullseye me-2"></i>Detection Status</h6>
+                        <div id="permanentShapeCounts" class="d-flex flex-wrap gap-2 align-items-center">
+                          <span class="text-muted" style="font-size: 0.85rem;">Ready to detect...</span>
+                        </div>
+                      </div>
+                      
+                      <button class="btn btn-primary w-100 mt-auto" id="detectShapes" type="button" disabled>
                         Detect Shapes
                       </button>
                     </div>
