@@ -38,3 +38,5 @@ errors.txt
 # OS
 .DS_Store
 Thumbs.db
+run2.bat
+build-mingw/

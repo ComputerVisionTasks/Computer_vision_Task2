@@ -395,9 +395,12 @@ int main() {
             }
             ca.area = fabsf(a) / 2.0f;
             
-            // Compute Freeman chain code from boundary points
+            // Compute Freeman chain code from boundary points.
+            // For correct visualization, build a dense boundary in lockstep
+            // with chain-code steps so indices map 1:1.
             const int ddx[] = {1, 1, 0, -1, -1, -1, 0, 1};
             const int ddy[] = {0, 1, 1, 1, 0, -1, -1, -1};
+            std::vector<std::pair<int,int>> denseBoundary;
             
             for (size_t i = 0; i < intPts.size(); i++) {
                 size_t j = (i + 1) % intPts.size();
@@ -418,12 +421,22 @@ int main() {
                         // Find direction code
                         for (int d = 0; d < 8; d++) {
                             if (ddx[d] == dirDx && ddy[d] == dirDy) {
+                                if (denseBoundary.empty() ||
+                                    denseBoundary.back().first != cx ||
+                                    denseBoundary.back().second != cy) {
+                                    denseBoundary.push_back({cx, cy});
+                                }
                                 ca.chainCode.push_back(d);
                                 break;
                             }
                         }
                     }
                 }
+            }
+
+            if (!denseBoundary.empty()) {
+                ca.boundary = std::move(denseBoundary);
+                ca.numPoints = (int)ca.boundary.size();
             }
             
             std::cout << "[/analyze-contour] Computed chain code with " << ca.chainCode.size() << " codes" << std::endl;
