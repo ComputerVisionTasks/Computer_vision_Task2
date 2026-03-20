@@ -1,4 +1,40 @@
-# Ignore Python virtual environment
-venv/
+# Build folder (VERY IMPORTANT)
+backend/build/
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Object & debug files
+
+*.o
+*.obj
+*.pdb
+*.ilk
+*.tlog
+
+# CMake
+
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+
+# Visual Studio
+
+*.sln
+*.vcxproj*
+*.filters
+*.user
+
+# VS Code
 .vscode/
-build/
+
+# Logs
+
+*.log
+errors.txt
+
+# OS
+.DS_Store
+Thumbs.db
