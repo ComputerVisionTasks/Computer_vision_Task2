@@ -302,108 +302,401 @@
 </div>
 
                 <!-- Shape Detection Tab -->
-                <div class="tab-pane fade" id="shape" role="tabpanel" aria-labelledby="shape-tab">
-                  <div class="row">
-                    <div class="col-md-8">
-                      <div class="row shape-type-row">
-                        <div class="col-md-4">
-                          <div class="form-check shape-type-check shape-card-lines">
-                            <input class="form-check-input" type="checkbox" id="detectLines" checked>
-                            <label class="form-check-label" for="detectLines">
-                              <span class="shape-type-label shape-type-lines">Lines</span>
-                              <span class="shape-type-tag shape-type-lines">Red</span>
-                            </label>
-                          </div>
-                        </div>
-                        <div class="col-md-4">
-                          <div class="form-check shape-type-check shape-card-circles">
-                            <input class="form-check-input" type="checkbox" id="detectCircles" checked>
-                            <label class="form-check-label" for="detectCircles">
-                              <span class="shape-type-label shape-type-circles">Circles</span>
-                              <span class="shape-type-tag shape-type-circles">Mint Green</span>
-                            </label>
-                          </div>
-                        </div>
-                        <div class="col-md-4">
-                          <div class="form-check shape-type-check shape-card-ellipses">
-                            <input class="form-check-input" type="checkbox" id="detectEllipses" checked>
-                            <label class="form-check-label" for="detectEllipses">
-                              <span class="shape-type-label shape-type-ellipses">Ellipses</span>
-                              <span class="shape-type-tag shape-type-ellipses">Blue</span>
-                            </label>
-                          </div>
-                        </div>
-                      </div>
+<div class="tab-pane fade" id="shape" role="tabpanel" aria-labelledby="shape-tab">
+  <div class="row">
+    <!-- Left Column - Shape Selection and Controls (70% width) -->
+    <div class="col-md-8">
+      <!-- Shape Type Selection Cards -->
+      <div class="row shape-type-row g-2 mb-3">
+        <div class="col-md-4">
+          <div class="shape-card shape-card-lines" data-shape="lines">
+            <div class="form-check shape-type-check">
+              <input class="form-check-input" type="checkbox" id="detectLines" checked>
+              <label class="form-check-label" for="detectLines">
+                <span class="shape-type-label">Lines</span>
+              </label>
+            </div>
+            <div class="shape-color-indicator" style="background: #ff4444;"></div>
+            <div class="shape-params-preview" id="linesPreview">0 detected</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="shape-card shape-card-circles" data-shape="circles">
+            <div class="form-check shape-type-check">
+              <input class="form-check-input" type="checkbox" id="detectCircles" checked>
+              <label class="form-check-label" for="detectCircles">
+                <span class="shape-type-label">Circles</span>
+              </label>
+            </div>
+            <div class="shape-color-indicator" style="background: #44ff44;"></div>
+            <div class="shape-params-preview" id="circlesPreview">0 detected</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="shape-card shape-card-ellipses" data-shape="ellipses">
+            <div class="form-check shape-type-check">
+              <input class="form-check-input" type="checkbox" id="detectEllipses" checked>
+              <label class="form-check-label" for="detectEllipses">
+                <span class="shape-type-label">Ellipses</span>
+              </label>
+            </div>
+            <div class="shape-color-indicator" style="background: #4444ff;"></div>
+            <div class="shape-params-preview" id="ellipsesPreview">0 detected</div>
+          </div>
+        </div>
+      </div>
 
-                      <div class="slider-card mt-3">
-                        <div class="slider-header">
-                          <span class="slider-title">Line Threshold</span>
-                          <span class="value-badge" id="lineThresholdValue">50</span>
-                        </div>
-                        <div class="slider-container">
-                          <input type="range" class="form-range custom-slider" id="lineThreshold" min="10" max="200" step="5" value="50">
-                          <div class="slider-labels">
-                            <span>10</span>
-                            <span>105</span>
-                            <span>200</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div class="row mt-3">
-                        <div class="col-md-6">
-                          <label class="form-label">Min Circle Radius</label>
-                          <input type="number" class="form-control" id="minRadius" value="10" min="5" max="200">
-                        </div>
-                        <div class="col-md-6">
-                          <label class="form-label">Max Circle Radius</label>
-                          <input type="number" class="form-control" id="maxRadius" value="100" min="10" max="500">
-                        </div>
-                      </div>
-
-                      <div class="slider-card mt-3">
-                        <div class="slider-header">
-                          <span class="slider-title">Ellipse Tolerance</span>
-                          <span class="value-badge" id="ellipseToleranceValue">0.1</span>
-                        </div>
-                        <div class="slider-container">
-                          <input type="range" class="form-range custom-slider" id="ellipseTolerance" min="0.01" max="0.5" step="0.01" value="0.1">
-                          <div class="slider-labels">
-                            <span>0.01</span>
-                            <span>0.25</span>
-                            <span>0.5</span>
-                          </div>
-                        </div>
-                      </div>
+      <!-- Dynamic Parameter Panels -->
+      <div class="parameter-panels">
+        <!-- Lines Parameters Panel -->
+        <div class="parameter-panel" id="linesPanel">
+          <div class="parameter-panel-header">
+            <i class="bi bi-slash-lg"></i>
+            <h6>Line Detection Parameters</h6>
+            <span class="badge bg-primary ms-2" id="linesCount">0</span>
+          </div>
+          <div class="parameter-panel-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="slider-card">
+                  <div class="slider-header">
+                    <span class="slider-title">Hough Threshold</span>
+                    <span class="value-badge" id="lineThresholdValue">50</span>
+                  </div>
+                  <div class="slider-container">
+                    <input type="range" class="form-range custom-slider" id="lineThreshold" min="10" max="200" step="5" value="50">
+                    <div class="slider-labels">
+                      <span>10</span>
+                      <span>105</span>
+                      <span>200</span>
                     </div>
-                    <div class="col-md-4 d-flex flex-column shape-action-column">
-                      <div class="run-button-container shape-detect-container">
-                        <button class="btn run-button" id="detectShapes" type="button" disabled>
-                          <div class="button-content">
-                            <i class="bi bi-bullseye button-icon"></i>
-                            <div class="button-text">
-                              <span class="button-title">Detect Shapes</span>
-                              <span class="button-subtitle">Lines, Circles, Ellipses</span>
-                            </div>
-                          </div>
-                          <div class="button-shine"></div>
-                        </button>
-                        <div class="button-hint">
-                          <i class="bi bi-stars"></i>
-                          <small>Find geometric structures</small>
-                        </div>
-                      </div>
+                  </div>
+                  <small class="text-muted">Minimum votes to detect a line</small>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="slider-card">
+                  <div class="slider-header">
+                    <span class="slider-title">Theta Resolution</span>
+                    <span class="value-badge" id="thetaResValue">1.0°</span>
+                  </div>
+                  <div class="slider-container">
+                    <input type="range" class="form-range custom-slider" id="thetaRes" min="0.5" max="5.0" step="0.5" value="1.0">
+                    <div class="slider-labels">
+                      <span>0.5°</span>
+                      <span>2.75°</span>
+                      <span>5.0°</span>
+                    </div>
+                  </div>
+                  <small class="text-muted">Angular step size</small>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="slider-card">
+                  <div class="slider-header">
+                    <span class="slider-title">Rho Resolution</span>
+                    <span class="value-badge" id="rhoResValue">1.0</span>
+                  </div>
+                  <div class="slider-container">
+                    <input type="range" class="form-range custom-slider" id="rhoRes" min="0.5" max="3.0" step="0.5" value="1.0">
+                    <div class="slider-labels">
+                      <span>0.5</span>
+                      <span>1.75</span>
+                      <span>3.0</span>
+                    </div>
+                  </div>
+                  <small class="text-muted">Distance resolution</small>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="parameter-info-card">
+                  <div class="d-flex align-items-center">
+                    <i class="bi bi-info-circle-fill me-2 text-info"></i>
+                    <span>Lines are drawn in <span style="color: #ff4444; font-weight: bold;">RED</span></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-                      <!-- Permanent Shape Results Display (Moved here from PROCESSED pane) -->
-                      <div id="permanentShapeResults" class="mb-3 p-3 rounded w-100" style="display: none; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); flex-grow: 1;">
-                        <h6 class="text-white mb-3" style="font-size: 0.85rem;"><i class="bi bi-bullseye me-2"></i>Detection Status</h6>
-                        <div id="permanentShapeCounts" class="d-flex flex-wrap gap-2 align-items-center">
-                          <span class="text-muted" style="font-size: 0.85rem;">Ready to detect...</span>
-                        </div>
-                      </div>
+        <!-- Circles Parameters Panel -->
+        <div class="parameter-panel" id="circlesPanel">
+          <div class="parameter-panel-header">
+            <i class="bi bi-circle"></i>
+            <h6>Circle Detection Parameters</h6>
+            <span class="badge bg-success ms-2" id="circlesCount">0</span>
+          </div>
+          <div class="parameter-panel-body">
+            <div class="row g-3">
+              <!-- Radius Range Sliders -->
+              <div class="col-md-6">
+                <div class="slider-card">
+                  <div class="slider-header">
+                    <span class="slider-title">Min Radius</span>
+                    <span class="value-badge" id="minRadiusValue">10</span>
+                  </div>
+                  <div class="slider-container">
+                    <input type="range" class="form-range custom-slider" id="minRadius" min="5" max="100" step="1" value="10">
+                    <div class="slider-labels">
+                      <span>5</span>
+                      <span>52</span>
+                      <span>100</span>
                     </div>
                   </div>
                 </div>
+              </div>
+              <div class="col-md-6">
+                <div class="slider-card">
+                  <div class="slider-header">
+                    <span class="slider-title">Max Radius</span>
+                    <span class="value-badge" id="maxRadiusValue">100</span>
+                  </div>
+                  <div class="slider-container">
+                    <input type="range" class="form-range custom-slider" id="maxRadius" min="20" max="300" step="5" value="100">
+                    <div class="slider-labels">
+                      <span>20</span>
+                      <span>160</span>
+                      <span>300</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Detection Thresholds -->
+              <div class="col-md-6">
+                <div class="slider-card">
+                  <div class="slider-header">
+                    <span class="slider-title">Threshold (Relative)</span>
+                    <span class="value-badge" id="circleThresholdValue">0.55</span>
+                  </div>
+                  <div class="slider-container">
+                    <input type="range" class="form-range custom-slider" id="circleThreshold" min="0.1" max="1.0" step="0.05" value="0.55">
+                    <div class="slider-labels">
+                      <span>0.1</span>
+                      <span>0.55</span>
+                      <span>1.0</span>
+                    </div>
+                  </div>
+                  <small class="text-muted">Fraction of max votes</small>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="slider-card">
+                  <div class="slider-header">
+                    <span class="slider-title">Min Absolute Votes</span>
+                    <span class="value-badge" id="minVotesValue">20</span>
+                  </div>
+                  <div class="slider-container">
+                    <input type="range" class="form-range custom-slider" id="minVotes" min="5" max="100" step="5" value="20">
+                    <div class="slider-labels">
+                      <span>5</span>
+                      <span>52</span>
+                      <span>100</span>
+                    </div>
+                  </div>
+                  <small class="text-muted">Hard minimum threshold</small>
+                </div>
+              </div>
+
+              <!-- Additional Circle Parameters -->
+              <div class="col-md-6">
+                <div class="slider-card">
+                  <div class="slider-header">
+                    <span class="slider-title">Center Distance</span>
+                    <span class="value-badge" id="centerDistValue">0.3</span>
+                  </div>
+                  <div class="slider-container">
+                    <input type="range" class="form-range custom-slider" id="centerDist" min="0.1" max="0.8" step="0.05" value="0.3">
+                    <div class="slider-labels">
+                      <span>0.1</span>
+                      <span>0.45</span>
+                      <span>0.8</span>
+                    </div>
+                  </div>
+                  <small class="text-muted">Min distance between centers (fraction of avg radius)</small>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="parameter-info-card">
+                  <div class="d-flex align-items-center">
+                    <i class="bi bi-info-circle-fill me-2 text-success"></i>
+                    <span>Circles are drawn in <span style="color: #44ff44; font-weight: bold;">GREEN</span></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ellipses Parameters Panel -->
+        <div class="parameter-panel" id="ellipsesPanel">
+          <div class="parameter-panel-header">
+            <i class="bi bi-egg"></i>
+            <h6>Ellipse Detection Parameters</h6>
+            <span class="badge bg-info ms-2" id="ellipsesCount">0</span>
+          </div>
+          <div class="parameter-panel-body">
+            <div class="row g-3">
+              <!-- Area Range -->
+              <div class="col-md-6">
+                <div class="slider-card">
+                  <div class="slider-header">
+                    <span class="slider-title">Min Area</span>
+                    <span class="value-badge" id="minAreaValue">200</span>
+                  </div>
+                  <div class="slider-container">
+                    <input type="range" class="form-range custom-slider" id="minArea" min="50" max="1000" step="50" value="200">
+                    <div class="slider-labels">
+                      <span>50</span>
+                      <span>525</span>
+                      <span>1000</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="slider-card">
+                  <div class="slider-header">
+                    <span class="slider-title">Max Area</span>
+                    <span class="value-badge" id="maxAreaValue">10000</span>
+                  </div>
+                  <div class="slider-container">
+                    <input type="range" class="form-range custom-slider" id="maxArea" min="1000" max="50000" step="1000" value="10000">
+                    <div class="slider-labels">
+                      <span>1K</span>
+                      <span>25.5K</span>
+                      <span>50K</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Detection Parameters -->
+              <div class="col-md-6">
+                <div class="slider-card">
+                  <div class="slider-header">
+                    <span class="slider-title">Ellipse Tolerance</span>
+                    <span class="value-badge" id="ellipseToleranceValue">0.1</span>
+                  </div>
+                  <div class="slider-container">
+                    <input type="range" class="form-range custom-slider" id="ellipseTolerance" min="0.01" max="0.5" step="0.01" value="0.1">
+                    <div class="slider-labels">
+                      <span>0.01</span>
+                      <span>0.25</span>
+                      <span>0.5</span>
+                    </div>
+                  </div>
+                  <small class="text-muted">Distance tolerance for inliers</small>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="slider-card">
+                  <div class="slider-header">
+                    <span class="slider-title">Min Aspect Ratio</span>
+                    <span class="value-badge" id="minAspectValue">0.1</span>
+                  </div>
+                  <div class="slider-container">
+                    <input type="range" class="form-range custom-slider" id="minAspect" min="0.05" max="0.5" step="0.05" value="0.1">
+                    <div class="slider-labels">
+                      <span>0.05</span>
+                      <span>0.275</span>
+                      <span>0.5</span>
+                    </div>
+                  </div>
+                  <small class="text-muted">Minimum b/a ratio to reject degenerates</small>
+                </div>
+              </div>
+
+              <!-- Inlier Ratio Threshold -->
+              <div class="col-md-6">
+                <div class="slider-card">
+                  <div class="slider-header">
+                    <span class="slider-title">Inlier Ratio</span>
+                    <span class="value-badge" id="inlierRatioValue">0.45</span>
+                  </div>
+                  <div class="slider-container">
+                    <input type="range" class="form-range custom-slider" id="inlierRatio" min="0.2" max="0.9" step="0.05" value="0.45">
+                    <div class="slider-labels">
+                      <span>0.2</span>
+                      <span>0.55</span>
+                      <span>0.9</span>
+                    </div>
+                  </div>
+                  <small class="text-muted">Minimum fraction of points on ellipse</small>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="parameter-info-card">
+                  <div class="d-flex align-items-center">
+                    <i class="bi bi-info-circle-fill me-2 text-info"></i>
+                    <span>Ellipses are drawn in <span style="color: #4444ff; font-weight: bold;">BLUE</span></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shape Results Summary -->
+      <div class="shape-summary mt-3" id="shapeSummary" style="display: none;">
+        <div class="shape-summary-header">
+          <i class="bi bi-bar-chart"></i>
+          <span>Detection Results</span>
+        </div>
+        <div class="shape-summary-body" id="shapeSummaryContent">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column - Action Buttons and Results Display -->
+    <div class="col-md-4 d-flex flex-column">
+      <!-- Main Detect Button -->
+      <div class="run-button-container shape-detect-container mb-3">
+        <button class="btn run-button" id="detectShapes" type="button" disabled>
+          <div class="button-content">
+            <i class="bi bi-bullseye button-icon"></i>
+            <div class="button-text">
+              <span class="button-title">Detect Shapes</span>
+              <span class="button-subtitle">Run detection with current parameters</span>
+            </div>
+          </div>
+          <div class="button-shine"></div>
+        </button>
+      </div>
+
+      
+
+      <!-- Permanent Shape Results Display -->
+      <div id="permanentShapeResults" class="results-card" style="display: none;">
+        <div class="results-card-header">
+          <i class="bi bi-bullseye me-2"></i>
+          <h6>Detection Status</h6>
+        </div>
+        <div class="results-card-body">
+          <div id="permanentShapeCounts" class="shape-counts">
+            <span class="text-muted">Ready to detect...</span>
+          </div>
+          <div id="shapeDetails" class="shape-details mt-2" style="font-size: 0.8rem;">
+            <!-- Detailed shape info will appear here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Export Options -->
+      <div class="export-options mt-2">
+        <button class="btn btn-outline-secondary w-100 mb-1" id="exportShapeParams" type="button" disabled>
+          <i class="bi bi-download me-2"></i>Export Parameters
+        </button>
+        <button class="btn btn-outline-secondary w-100" id="copyShapeResults" type="button" disabled>
+          <i class="bi bi-clipboard me-2"></i>Copy Results
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
                 <!-- Active Contour (Snake) Tab -->
                 <div class="tab-pane fade" id="snake" role="tabpanel" aria-labelledby="snake-tab">

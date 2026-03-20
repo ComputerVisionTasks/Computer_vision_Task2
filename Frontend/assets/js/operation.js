@@ -1,7 +1,7 @@
 /**
  * FromScratchCV - Operations Page JavaScript
  * Handles image upload, processing, and API communication
- * All components always visible version
+ * Enhanced with comprehensive shape detection controls
  */
 
 // Global state
@@ -12,7 +12,13 @@ let currentState = {
     overlayImage: null,
     contourPoints: [],
     snakeInitialized: false,
-    history: []
+    history: [],
+    shapeDetection: {
+        lines: { count: 0, data: [] },
+        circles: { count: 0, data: [] },
+        ellipses: { count: 0, data: [] },
+        lastParams: null
+    }
 };
 
 // API Base URL - Update this to your backend URL
@@ -28,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeAOS();
     createToastContainer();
     disableAllOperationButtons(true);
+    initShapeDetection();
 });
 
 // Create toast container
@@ -110,29 +117,26 @@ function initializeEventListeners() {
     if (lineThreshold) lineThreshold.addEventListener('input', updateRangeDisplay);
     if (ellipseTolerance) ellipseTolerance.addEventListener('input', updateRangeDisplay);
     if (detectShapesBtn) detectShapesBtn.addEventListener('click', detectShapes);
-    initShapeTypeToggles();
 
     // Snake
     const alpha = document.getElementById('alpha');
     const beta = document.getElementById('beta');
     const iterations = document.getElementById('iterations');
+    const gamma = document.getElementById('gamma');
     const initSnakeBtn = document.getElementById('initSnake');
     const runSnakeBtn = document.getElementById('runSnake');
-    const clearPointsBtn = document.getElementById('clearPoints');
     
     if (alpha) alpha.addEventListener('input', updateRangeDisplay);
     if (beta) beta.addEventListener('input', updateRangeDisplay);
     if (iterations) iterations.addEventListener('input', updateRangeDisplay);
+    if (gamma) gamma.addEventListener('input', updateRangeDisplay);
     if (initSnakeBtn) initSnakeBtn.addEventListener('click', initializeSnake);
     if (runSnakeBtn) runSnakeBtn.addEventListener('click', runSnakeEvolution);
-    if (clearPointsBtn) clearPointsBtn.addEventListener('click', clearSnakePoints);
 
     // Analysis
     const analyzeContourBtn = document.getElementById('analyzeContour');
-    const exportChainCodeBtn = document.getElementById('exportChainCode');
     
     if (analyzeContourBtn) analyzeContourBtn.addEventListener('click', analyzeContour);
-    if (exportChainCodeBtn) exportChainCodeBtn.addEventListener('click', exportResults);
 
     // Original image click for snake points
     const originalPreview = document.getElementById('originalPreview');
@@ -143,30 +147,227 @@ function initializeEventListeners() {
     console.log('Event listeners initialized');
 }
 
-function initShapeTypeToggles() {
-    const shapeInputs = [
-        document.getElementById('detectLines'),
-        document.getElementById('detectCircles'),
-        document.getElementById('detectEllipses')
-    ].filter(Boolean);
-
-    shapeInputs.forEach(input => {
-        const card = input.closest('.shape-type-check');
-        if (!card) return;
-
-        const refreshCardState = () => {
-            card.classList.toggle('is-selected', input.checked);
-        };
-
-        refreshCardState();
-        input.addEventListener('change', refreshCardState);
-
-        card.addEventListener('click', (event) => {
-            if (event.target === input || event.target.closest('label')) return;
-            input.checked = !input.checked;
-            input.dispatchEvent(new Event('change', { bubbles: true }));
-        });
+// Initialize shape detection controls
+function initShapeDetection() {
+    console.log('Initializing shape detection controls');
+    
+    // Shape type toggles
+    const shapeInputs = ['detectLines', 'detectCircles', 'detectEllipses'];
+    shapeInputs.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('change', updateShapePanels);
+        }
     });
+
+    // Line parameters
+    const lineParams = ['lineThreshold', 'thetaRes', 'rhoRes'];
+    lineParams.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('input', updateRangeDisplay);
+            input.addEventListener('change', () => updateShapeParams('lines'));
+        }
+    });
+
+    // Circle parameters
+    const circleParams = ['minRadius', 'maxRadius', 'circleThreshold', 'minVotes', 'centerDist'];
+    circleParams.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('input', updateRangeDisplay);
+            input.addEventListener('change', () => updateShapeParams('circles'));
+            
+            // Special handling for radius relationship
+            if (id === 'minRadius' || id === 'maxRadius') {
+                input.addEventListener('change', validateRadiusRange);
+            }
+        }
+    });
+
+    // Ellipse parameters
+    const ellipseParams = ['minArea', 'maxArea', 'ellipseTolerance', 'minAspect', 'inlierRatio'];
+    ellipseParams.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('input', updateRangeDisplay);
+            input.addEventListener('change', () => updateShapeParams('ellipses'));
+            
+            // Special handling for area relationship
+            if (id === 'minArea' || id === 'maxArea') {
+                input.addEventListener('change', validateAreaRange);
+            }
+        }
+    });
+
+    // Preset buttons
+    const presetDefault = document.getElementById('presetDefault');
+    const presetPrecise = document.getElementById('presetPrecise');
+    const presetFast = document.getElementById('presetFast');
+    
+    if (presetDefault) presetDefault.addEventListener('click', () => loadShapePreset('default'));
+    if (presetPrecise) presetPrecise.addEventListener('click', () => loadShapePreset('precise'));
+    if (presetFast) presetFast.addEventListener('click', () => loadShapePreset('fast'));
+
+    // Export buttons
+    const exportParamsBtn = document.getElementById('exportShapeParams');
+    const copyResultsBtn = document.getElementById('copyShapeResults');
+    
+    if (exportParamsBtn) exportParamsBtn.addEventListener('click', exportShapeParameters);
+    if (copyResultsBtn) copyResultsBtn.addEventListener('click', copyShapeResults);
+
+    // Initial panel state
+    updateShapePanels();
+}
+
+// Update shape panels visibility based on checkboxes
+function updateShapePanels() {
+    const panels = {
+        lines: document.getElementById('linesPanel'),
+        circles: document.getElementById('circlesPanel'),
+        ellipses: document.getElementById('ellipsesPanel')
+    };
+
+    const checks = {
+        lines: document.getElementById('detectLines')?.checked,
+        circles: document.getElementById('detectCircles')?.checked,
+        ellipses: document.getElementById('detectEllipses')?.checked
+    };
+
+    // Update panel visibility with animation
+    Object.keys(panels).forEach(key => {
+        if (panels[key]) {
+            if (checks[key]) {
+                panels[key].style.display = 'block';
+                setTimeout(() => panels[key].classList.add('visible'), 10);
+            } else {
+                panels[key].classList.remove('visible');
+                setTimeout(() => panels[key].style.display = 'none', 300);
+            }
+        }
+    });
+
+    // Update shape cards selected state
+    document.querySelectorAll('.shape-card').forEach(card => {
+        const shape = card.dataset.shape;
+        if (checks[shape]) {
+            card.classList.add('selected');
+        } else {
+            card.classList.remove('selected');
+        }
+    });
+}
+
+// Validate min/max radius relationship
+function validateRadiusRange() {
+    const minInput = document.getElementById('minRadius');
+    const maxInput = document.getElementById('maxRadius');
+    
+    if (minInput && maxInput) {
+        let min = parseInt(minInput.value);
+        let max = parseInt(maxInput.value);
+        
+        if (min >= max) {
+            maxInput.value = min + 10;
+            updateRangeDisplay({ target: maxInput });
+            showToast('Max radius adjusted to be greater than min radius', 'warning');
+        }
+    }
+}
+
+// Validate min/max area relationship
+function validateAreaRange() {
+    const minInput = document.getElementById('minArea');
+    const maxInput = document.getElementById('maxArea');
+    
+    if (minInput && maxInput) {
+        let min = parseInt(minInput.value);
+        let max = parseInt(maxInput.value);
+        
+        if (min >= max) {
+            maxInput.value = min * 2;
+            updateRangeDisplay({ target: maxInput });
+            showToast('Max area adjusted to be greater than min area', 'warning');
+        }
+    }
+}
+
+// Load shape detection preset
+function loadShapePreset(preset) {
+    switch(preset) {
+        case 'default':
+            // Default balanced settings
+            if (document.getElementById('lineThreshold')) document.getElementById('lineThreshold').value = 50;
+            if (document.getElementById('thetaRes')) document.getElementById('thetaRes').value = 1.0;
+            if (document.getElementById('rhoRes')) document.getElementById('rhoRes').value = 1.0;
+            
+            if (document.getElementById('minRadius')) document.getElementById('minRadius').value = 10;
+            if (document.getElementById('maxRadius')) document.getElementById('maxRadius').value = 100;
+            if (document.getElementById('circleThreshold')) document.getElementById('circleThreshold').value = 0.55;
+            if (document.getElementById('minVotes')) document.getElementById('minVotes').value = 20;
+            if (document.getElementById('centerDist')) document.getElementById('centerDist').value = 0.3;
+            
+            if (document.getElementById('minArea')) document.getElementById('minArea').value = 200;
+            if (document.getElementById('maxArea')) document.getElementById('maxArea').value = 10000;
+            if (document.getElementById('ellipseTolerance')) document.getElementById('ellipseTolerance').value = 0.1;
+            if (document.getElementById('minAspect')) document.getElementById('minAspect').value = 0.1;
+            if (document.getElementById('inlierRatio')) document.getElementById('inlierRatio').value = 0.45;
+            break;
+            
+        case 'precise':
+            // More accurate but slower settings
+            if (document.getElementById('lineThreshold')) document.getElementById('lineThreshold').value = 30;
+            if (document.getElementById('thetaRes')) document.getElementById('thetaRes').value = 0.5;
+            if (document.getElementById('rhoRes')) document.getElementById('rhoRes').value = 0.5;
+            
+            if (document.getElementById('minRadius')) document.getElementById('minRadius').value = 5;
+            if (document.getElementById('maxRadius')) document.getElementById('maxRadius').value = 150;
+            if (document.getElementById('circleThreshold')) document.getElementById('circleThreshold').value = 0.7;
+            if (document.getElementById('minVotes')) document.getElementById('minVotes').value = 15;
+            if (document.getElementById('centerDist')) document.getElementById('centerDist').value = 0.2;
+            
+            if (document.getElementById('minArea')) document.getElementById('minArea').value = 100;
+            if (document.getElementById('maxArea')) document.getElementById('maxArea').value = 20000;
+            if (document.getElementById('ellipseTolerance')) document.getElementById('ellipseTolerance').value = 0.05;
+            if (document.getElementById('minAspect')) document.getElementById('minAspect').value = 0.15;
+            if (document.getElementById('inlierRatio')) document.getElementById('inlierRatio').value = 0.6;
+            break;
+            
+        case 'fast':
+            // Faster but less accurate settings
+            if (document.getElementById('lineThreshold')) document.getElementById('lineThreshold').value = 80;
+            if (document.getElementById('thetaRes')) document.getElementById('thetaRes').value = 2.0;
+            if (document.getElementById('rhoRes')) document.getElementById('rhoRes').value = 2.0;
+            
+            if (document.getElementById('minRadius')) document.getElementById('minRadius').value = 15;
+            if (document.getElementById('maxRadius')) document.getElementById('maxRadius').value = 80;
+            if (document.getElementById('circleThreshold')) document.getElementById('circleThreshold').value = 0.4;
+            if (document.getElementById('minVotes')) document.getElementById('minVotes').value = 30;
+            if (document.getElementById('centerDist')) document.getElementById('centerDist').value = 0.5;
+            
+            if (document.getElementById('minArea')) document.getElementById('minArea').value = 500;
+            if (document.getElementById('maxArea')) document.getElementById('maxArea').value = 5000;
+            if (document.getElementById('ellipseTolerance')) document.getElementById('ellipseTolerance').value = 0.2;
+            if (document.getElementById('minAspect')) document.getElementById('minAspect').value = 0.05;
+            if (document.getElementById('inlierRatio')) document.getElementById('inlierRatio').value = 0.3;
+            break;
+    }
+    
+    // Update all displays
+    document.querySelectorAll('input[type=range]').forEach(input => {
+        updateRangeDisplay({ target: input });
+    });
+    
+    showToast(`Loaded ${preset} preset`, 'success');
+}
+
+// Update shape parameters (can be used for real-time preview)
+function updateShapeParams(shapeType) {
+    if (!currentState.originalImage) return;
+    
+    // Could implement real-time parameter preview here
+    // For now, just log the changes
+    console.log(`Shape params updated for ${shapeType}`);
 }
 
 // Disable/enable all operation buttons
@@ -177,9 +378,7 @@ function disableAllOperationButtons(disabled) {
         'detectShapes',
         'initSnake',
         'runSnake',
-        'clearPoints',
-        'analyzeContour',
-        'exportChainCode'
+        'analyzeContour'
     ];
     
     operationButtons.forEach(id => {
@@ -272,6 +471,14 @@ async function handleFile(file) {
         currentState.originalImage = data.original;
         currentState.processedImage = data.processed;
 
+        // Reset shape detection state
+        currentState.shapeDetection = {
+            lines: { count: 0, data: [] },
+            circles: { count: 0, data: [] },
+            ellipses: { count: 0, data: [] },
+            lastParams: null
+        };
+
         // Update UI - hide placeholders and show images
         const originalPreview = document.getElementById('originalPreview');
         const processedPreview = document.getElementById('processedPreview');
@@ -289,6 +496,16 @@ async function handleFile(file) {
             processedPreview.style.display = 'block';
             processedPlaceholder.style.display = 'none';
         }
+
+        // Update shape counts display
+        updateShapeResultsUI();
+        
+        // Hide shape summary until new detection
+        const shapeSummary = document.getElementById('shapeSummary');
+        if (shapeSummary) shapeSummary.style.display = 'none';
+        
+        const permanentResults = document.getElementById('permanentShapeResults');
+        if (permanentResults) permanentResults.style.display = 'none';
 
         // Enable all operation buttons
         disableAllOperationButtons(false);
@@ -310,22 +527,29 @@ function updateRangeDisplay(e) {
     // Format value appropriately
     let displayValue;
     if (id === 'iterations') {
-        displayValue = Math.round(value).toString(); // No decimal for iterations
+        displayValue = Math.round(value).toString();
+    } else if (id === 'thetaRes' || id === 'rhoRes') {
+        displayValue = value.toFixed(1);
     } else {
-        displayValue = value.toFixed(2); // 2 decimals for alpha, beta, etc.
+        displayValue = value.toFixed(2);
     }
     
-    // Look for badge format (e.g., 'alphaValueBadge' for 'alpha')
+    // Look for badge format
     let display = document.getElementById(id + 'ValueBadge');
     if (!display) {
-        display = document.getElementById(id + 'Badge'); // Fallback
+        display = document.getElementById(id + 'Badge');
     }
     if (!display) {
-        display = document.getElementById(id + 'Value'); // Fallback
+        display = document.getElementById(id + 'Value');
     }
     
     if (display) {
         display.textContent = displayValue;
+        
+        // Add unit if applicable
+        if (id === 'thetaRes') {
+            display.textContent = displayValue + '°';
+        }
     }
 }
 
@@ -385,14 +609,12 @@ async function runCannyEdge() {
     }
 }
 
-// Detect shapes
+// Enhanced detect shapes function
 async function detectShapes() {
     if (!currentState.originalImage) {
         showToast('Please upload an image first', 'error');
         return;
     }
-
-    showLoading('Detecting shapes...');
 
     const detectLines = document.getElementById('detectLines').checked;
     const detectCircles = document.getElementById('detectCircles').checked;
@@ -400,18 +622,34 @@ async function detectShapes() {
 
     if (!detectLines && !detectCircles && !detectEllipses) {
         showToast('Please select at least one shape type to detect', 'error');
-        hideLoading();
         return;
     }
 
+    showLoading('Detecting shapes...');
+
     try {
-        // To render multiple shapes without backend overwrite issues, we'll draw them on a Canvas
-        // using the math data returned by the backend.
-        
-        // 1. Get the original image to draw on
+        // Store current parameters
+        const params = {
+            lines: {
+                threshold: document.getElementById('lineThreshold')?.value || '50',
+                thetaRes: document.getElementById('thetaRes')?.value || '1.0',
+                rhoRes: document.getElementById('rhoRes')?.value || '1.0'
+            },
+            circles: {
+                radius_min: document.getElementById('minRadius')?.value || '10',
+                radius_max: document.getElementById('maxRadius')?.value || '100',
+                threshold: document.getElementById('circleThreshold')?.value || '0.55',
+                min_votes: document.getElementById('minVotes')?.value || '20'
+            },
+            ellipses: {
+                min_area: document.getElementById('minArea')?.value || '200',
+                max_area: document.getElementById('maxArea')?.value || '10000',
+                tolerance: document.getElementById('ellipseTolerance')?.value || '0.1'
+            }
+        };
+
+        // Load base image
         const baseImg = new Image();
-        
-        // Wait for image to load before drawing
         await new Promise((resolve, reject) => {
             baseImg.onload = resolve;
             baseImg.onerror = reject;
@@ -424,15 +662,23 @@ async function detectShapes() {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(baseImg, 0, 0);
 
+        // Reset shape detection results
+        currentState.shapeDetection = {
+            lines: { count: 0, data: [] },
+            circles: { count: 0, data: [] },
+            ellipses: { count: 0, data: [] },
+            lastParams: params
+        };
+
         let shapesDetected = false;
-        const results = {};
 
         // Detect Lines
         if (detectLines) {
-            showLoading('Detecting lines...');
             const lineFormData = new FormData();
             lineFormData.append('session_id', currentState.sessionId);
-            lineFormData.append('threshold', document.getElementById('lineThreshold').value);
+            lineFormData.append('threshold', params.lines.threshold);
+            lineFormData.append('theta_res', params.lines.thetaRes);
+            lineFormData.append('rho_res', params.lines.rhoRes);
 
             const lineResponse = await fetch(`${API_BASE_URL}/hough-lines`, {
                 method: 'POST',
@@ -441,7 +687,10 @@ async function detectShapes() {
 
             if (lineResponse.ok) {
                 const lineData = await lineResponse.json();
-                results.lines = lineData.num_lines;
+                currentState.shapeDetection.lines = {
+                    count: lineData.num_lines || 0,
+                    data: lineData.lines || []
+                };
                 shapesDetected = true;
                 
                 // Draw lines in RED
@@ -449,17 +698,13 @@ async function detectShapes() {
                 ctx.lineWidth = 2;
                 const span = Math.max(canvas.width, canvas.height) * 2;
                 for (const l of lineData.lines || []) {
-                    const r = l[0], t = l[1]; // rho, theta
+                    const r = l[0], t = l[1];
                     const ca = Math.cos(t), sa = Math.sin(t);
                     const x0 = ca * r, y0 = sa * r;
-                    const x1 = Math.round(x0 + span * (-sa));
-                    const y1 = Math.round(y0 + span * (ca));
-                    const x2 = Math.round(x0 - span * (-sa));
-                    const y2 = Math.round(y0 - span * (ca));
                     
                     ctx.beginPath();
-                    ctx.moveTo(x1, y1);
-                    ctx.lineTo(x2, y2);
+                    ctx.moveTo(x0 - sa * span, y0 + ca * span);
+                    ctx.lineTo(x0 + sa * span, y0 - ca * span);
                     ctx.stroke();
                 }
             }
@@ -467,11 +712,12 @@ async function detectShapes() {
 
         // Detect Circles
         if (detectCircles) {
-            showLoading('Detecting circles...');
             const circleFormData = new FormData();
             circleFormData.append('session_id', currentState.sessionId);
-            circleFormData.append('radius_min', document.getElementById('minRadius').value);
-            circleFormData.append('radius_max', document.getElementById('maxRadius').value);
+            circleFormData.append('radius_min', params.circles.radius_min);
+            circleFormData.append('radius_max', params.circles.radius_max);
+            circleFormData.append('threshold', params.circles.threshold);
+            circleFormData.append('min_abs_votes', params.circles.min_votes);
 
             const circleResponse = await fetch(`${API_BASE_URL}/hough-circles`, {
                 method: 'POST',
@@ -480,7 +726,10 @@ async function detectShapes() {
 
             if (circleResponse.ok) {
                 const circleData = await circleResponse.json();
-                results.circles = circleData.num_circles;
+                currentState.shapeDetection.circles = {
+                    count: circleData.num_circles || 0,
+                    data: circleData.circles || []
+                };
                 shapesDetected = true;
 
                 // Draw circles in GREEN
@@ -490,18 +739,23 @@ async function detectShapes() {
                     ctx.beginPath();
                     ctx.arc(c[0], c[1], c[2], 0, 2 * Math.PI);
                     ctx.stroke();
+                    
+                    // Draw center point
+                    ctx.fillStyle = 'rgba(0, 255, 0, 0.5)';
+                    ctx.beginPath();
+                    ctx.arc(c[0], c[1], 3, 0, 2 * Math.PI);
+                    ctx.fill();
                 }
             }
         }
 
         // Detect Ellipses
         if (detectEllipses) {
-            showLoading('Detecting ellipses...');
             const ellipseFormData = new FormData();
             ellipseFormData.append('session_id', currentState.sessionId);
-            ellipseFormData.append('tolerance', document.getElementById('ellipseTolerance').value);
-            ellipseFormData.append('min_area', 100);
-            ellipseFormData.append('max_area', 10000);
+            ellipseFormData.append('min_area', params.ellipses.min_area);
+            ellipseFormData.append('max_area', params.ellipses.max_area);
+            ellipseFormData.append('tolerance', params.ellipses.tolerance);
 
             const ellipseResponse = await fetch(`${API_BASE_URL}/detect-ellipses`, {
                 method: 'POST',
@@ -510,7 +764,10 @@ async function detectShapes() {
 
             if (ellipseResponse.ok) {
                 const ellipseData = await ellipseResponse.json();
-                results.ellipses = ellipseData.num_ellipses;
+                currentState.shapeDetection.ellipses = {
+                    count: ellipseData.num_ellipses || 0,
+                    data: ellipseData.ellipses || []
+                };
                 shapesDetected = true;
 
                 // Draw ellipses in BLUE
@@ -520,6 +777,12 @@ async function detectShapes() {
                     ctx.beginPath();
                     ctx.ellipse(e.x, e.y, e.a, e.b, e.angle, 0, 2 * Math.PI);
                     ctx.stroke();
+                    
+                    // Draw center point
+                    ctx.fillStyle = 'rgba(0, 0, 255, 0.5)';
+                    ctx.beginPath();
+                    ctx.arc(e.x, e.y, 3, 0, 2 * Math.PI);
+                    ctx.fill();
                 }
             }
         }
@@ -534,30 +797,20 @@ async function detectShapes() {
             }
         }
 
-        // Show results message
-        let message = 'Detection completed: ';
+        // Update UI with results
+        updateShapeResultsUI();
+        showShapeParameters(params);
+
+        // Show results in permanent display
+        displayShapeResults();
+
+        // Build success message
         const parts = [];
-        if (results.lines !== undefined) parts.push(`<span class="badge bg-primary px-3 py-2"><i class="bi bi-slash-lg me-1"></i>${results.lines} Lines</span>`);
-        if (results.circles !== undefined) parts.push(`<span class="badge bg-success px-3 py-2"><i class="bi bi-circle me-1"></i>${results.circles} Circles</span>`);
-        if (results.ellipses !== undefined) parts.push(`<span class="badge bg-danger px-3 py-2"><i class="bi bi-egg me-1"></i>${results.ellipses} Ellipses</span>`);
+        if (currentState.shapeDetection.lines.count > 0) parts.push(`${currentState.shapeDetection.lines.count} lines`);
+        if (currentState.shapeDetection.circles.count > 0) parts.push(`${currentState.shapeDetection.circles.count} circles`);
+        if (currentState.shapeDetection.ellipses.count > 0) parts.push(`${currentState.shapeDetection.ellipses.count} ellipses`);
         
-        const permanentCounts = document.getElementById('permanentShapeCounts');
-        const permanentResults = document.getElementById('permanentShapeResults');
-        
-        if (permanentCounts && permanentResults) {
-            if (parts.length === 0) {
-                permanentCounts.innerHTML = '<span class="text-muted" style="font-size: 0.85rem;">No shapes detected.</span>';
-                message = 'No shapes detected.';
-            } else {
-                permanentCounts.innerHTML = parts.join('');
-            }
-            permanentResults.style.display = 'block';
-        }
-        
-        // Ensure old shapeResults is removed to avoid duplicates if it exists
-        const oldTarget = document.getElementById('shapeResults');
-        if (oldTarget) oldTarget.remove();
-        
+        const message = parts.length > 0 ? `Detected: ${parts.join(', ')}` : 'No shapes detected';
         showToast(message, 'success');
 
     } catch (error) {
@@ -566,6 +819,252 @@ async function detectShapes() {
     } finally {
         hideLoading();
     }
+}
+
+// Update shape results UI
+function updateShapeResultsUI() {
+    // Update counts in panels
+    const linesCount = document.getElementById('linesCount');
+    const circlesCount = document.getElementById('circlesCount');
+    const ellipsesCount = document.getElementById('ellipsesCount');
+    
+    if (linesCount) linesCount.textContent = currentState.shapeDetection.lines.count;
+    if (circlesCount) circlesCount.textContent = currentState.shapeDetection.circles.count;
+    if (ellipsesCount) ellipsesCount.textContent = currentState.shapeDetection.ellipses.count;
+    
+    // Update preview badges
+    const linesPreview = document.getElementById('linesPreview');
+    const circlesPreview = document.getElementById('circlesPreview');
+    const ellipsesPreview = document.getElementById('ellipsesPreview');
+    
+    if (linesPreview) linesPreview.textContent = `${currentState.shapeDetection.lines.count} detected`;
+    if (circlesPreview) circlesPreview.textContent = `${currentState.shapeDetection.circles.count} detected`;
+    if (ellipsesPreview) ellipsesPreview.textContent = `${currentState.shapeDetection.ellipses.count} detected`;
+}
+
+// Show shape parameters
+function showShapeParameters(params) {
+    const summary = document.getElementById('shapeSummary');
+    const content = document.getElementById('shapeSummaryContent');
+    
+    if (!summary || !content) return;
+    
+    let html = '<div class="row g-2">';
+    
+    if (document.getElementById('detectLines').checked) {
+        html += `
+            <div class="col-12">
+                <div class="param-group">
+                    <span class="param-group-title"><i class="bi bi-slash-lg"></i> Lines</span>
+                    <div class="param-list">
+                        <span class="param-item">Threshold: ${params.lines.threshold}</span>
+                        <span class="param-item">θ Res: ${params.lines.thetaRes}°</span>
+                        <span class="param-item">ρ Res: ${params.lines.rhoRes}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (document.getElementById('detectCircles').checked) {
+        html += `
+            <div class="col-12">
+                <div class="param-group">
+                    <span class="param-group-title"><i class="bi bi-circle"></i> Circles</span>
+                    <div class="param-list">
+                        <span class="param-item">Radius: ${params.circles.radius_min}-${params.circles.radius_max}</span>
+                        <span class="param-item">Threshold: ${params.circles.threshold}</span>
+                        <span class="param-item">Min Votes: ${params.circles.min_votes}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (document.getElementById('detectEllipses').checked) {
+        html += `
+            <div class="col-12">
+                <div class="param-group">
+                    <span class="param-group-title"><i class="bi bi-egg"></i> Ellipses</span>
+                    <div class="param-list">
+                        <span class="param-item">Area: ${params.ellipses.min_area}-${params.ellipses.max_area}</span>
+                        <span class="param-item">Tolerance: ${params.ellipses.tolerance}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    html += '</div>';
+    
+    content.innerHTML = html;
+    summary.style.display = 'block';
+}
+
+// Display shape results in permanent panel
+function displayShapeResults() {
+    const permanentResults = document.getElementById('permanentShapeResults');
+    const permanentCounts = document.getElementById('permanentShapeCounts');
+    const shapeDetails = document.getElementById('shapeDetails');
+    
+    if (!permanentResults || !permanentCounts) return;
+    
+    let countsHtml = '';
+    let detailsHtml = '';
+    
+    if (currentState.shapeDetection.lines.count > 0) {
+        countsHtml += `<span class="badge shape-badge shape-badge-lines me-1 mb-1">${currentState.shapeDetection.lines.count} Lines</span>`;
+        
+        // Show first few lines parameters
+        if (currentState.shapeDetection.lines.data.length > 0) {
+            detailsHtml += '<div class="lines-details mt-2"><strong>Lines:</strong><br>';
+            currentState.shapeDetection.lines.data.slice(0, 3).forEach((line, i) => {
+                const angle = (line[1] * 180 / Math.PI).toFixed(1);
+                detailsHtml += `<small>Line ${i+1}: ρ=${line[0].toFixed(1)}, θ=${angle}°</small><br>`;
+            });
+            if (currentState.shapeDetection.lines.data.length > 3) {
+                detailsHtml += `<small>... and ${currentState.shapeDetection.lines.data.length - 3} more</small>`;
+            }
+            detailsHtml += '</div>';
+        }
+    }
+    
+    if (currentState.shapeDetection.circles.count > 0) {
+        countsHtml += `<span class="badge shape-badge shape-badge-circles me-1 mb-1">${currentState.shapeDetection.circles.count} Circles</span>`;
+        
+        if (currentState.shapeDetection.circles.data.length > 0) {
+            detailsHtml += '<div class="circles-details mt-2"><strong>Circles:</strong><br>';
+            currentState.shapeDetection.circles.data.slice(0, 3).forEach((circle, i) => {
+                detailsHtml += `<small>Circle ${i+1}: (${circle[0]},${circle[1]}) r=${circle[2]}</small><br>`;
+            });
+            if (currentState.shapeDetection.circles.data.length > 3) {
+                detailsHtml += `<small>... and ${currentState.shapeDetection.circles.data.length - 3} more</small>`;
+            }
+            detailsHtml += '</div>';
+        }
+    }
+    
+    if (currentState.shapeDetection.ellipses.count > 0) {
+        countsHtml += `<span class="badge shape-badge shape-badge-ellipses me-1 mb-1">${currentState.shapeDetection.ellipses.count} Ellipses</span>`;
+        
+        if (currentState.shapeDetection.ellipses.data.length > 0) {
+            detailsHtml += '<div class="ellipses-details mt-2"><strong>Ellipses:</strong><br>';
+            currentState.shapeDetection.ellipses.data.slice(0, 3).forEach((ellipse, i) => {
+                const angle = (ellipse.angle * 180 / Math.PI).toFixed(1);
+                detailsHtml += `<small>Ellipse ${i+1}: a=${ellipse.a.toFixed(1)}, b=${ellipse.b.toFixed(1)}, angle=${angle}°</small><br>`;
+            });
+            if (currentState.shapeDetection.ellipses.data.length > 3) {
+                detailsHtml += `<small>... and ${currentState.shapeDetection.ellipses.data.length - 3} more</small>`;
+            }
+            detailsHtml += '</div>';
+        }
+    }
+    
+    if (countsHtml) {
+        permanentCounts.innerHTML = countsHtml;
+        if (shapeDetails) shapeDetails.innerHTML = detailsHtml;
+        permanentResults.style.display = 'block';
+        
+        // Enable export buttons
+        const exportParamsBtn = document.getElementById('exportShapeParams');
+        const copyResultsBtn = document.getElementById('copyShapeResults');
+        if (exportParamsBtn) exportParamsBtn.disabled = false;
+        if (copyResultsBtn) copyResultsBtn.disabled = false;
+    } else {
+        permanentCounts.innerHTML = '<span class="text-muted">No shapes detected. Try adjusting parameters.</span>';
+        if (shapeDetails) shapeDetails.innerHTML = '';
+        permanentResults.style.display = 'block';
+        
+        // Disable export buttons
+        const exportParamsBtn = document.getElementById('exportShapeParams');
+        const copyResultsBtn = document.getElementById('copyShapeResults');
+        if (exportParamsBtn) exportParamsBtn.disabled = true;
+        if (copyResultsBtn) copyResultsBtn.disabled = true;
+    }
+}
+
+// Export shape parameters and results
+function exportShapeParameters() {
+    const exportData = {
+        timestamp: new Date().toISOString(),
+        parameters: currentState.shapeDetection.lastParams,
+        results: {
+            lines: {
+                count: currentState.shapeDetection.lines.count,
+                data: currentState.shapeDetection.lines.data
+            },
+            circles: {
+                count: currentState.shapeDetection.circles.count,
+                data: currentState.shapeDetection.circles.data
+            },
+            ellipses: {
+                count: currentState.shapeDetection.ellipses.count,
+                data: currentState.shapeDetection.ellipses.data
+            }
+        },
+        image_info: {
+            width: document.getElementById('originalPreview')?.naturalWidth,
+            height: document.getElementById('originalPreview')?.naturalHeight
+        }
+    };
+    
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `shape_detection_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    showToast('Shape parameters exported', 'success');
+}
+
+// Copy shape results to clipboard
+function copyShapeResults() {
+    const lines = currentState.shapeDetection.lines.count;
+    const circles = currentState.shapeDetection.circles.count;
+    const ellipses = currentState.shapeDetection.ellipses.count;
+    
+    let text = `Shape Detection Results - ${new Date().toLocaleString()}\n`;
+    text += `${'='.repeat(50)}\n\n`;
+    text += `Lines: ${lines}\n`;
+    text += `Circles: ${circles}\n`;
+    text += `Ellipses: ${ellipses}\n\n`;
+    
+    if (lines > 0) {
+        text += `Line Details:\n`;
+        text += `${'-'.repeat(30)}\n`;
+        currentState.shapeDetection.lines.data.forEach((line, i) => {
+            const angle = (line[1] * 180 / Math.PI).toFixed(1);
+            text += `  Line ${i+1}: ρ=${line[0].toFixed(1)}, θ=${angle}°\n`;
+        });
+        text += `\n`;
+    }
+    
+    if (circles > 0) {
+        text += `Circle Details:\n`;
+        text += `${'-'.repeat(30)}\n`;
+        currentState.shapeDetection.circles.data.forEach((circle, i) => {
+            text += `  Circle ${i+1}: center=(${circle[0]},${circle[1]}), radius=${circle[2]}\n`;
+        });
+        text += `\n`;
+    }
+    
+    if (ellipses > 0) {
+        text += `Ellipse Details:\n`;
+        text += `${'-'.repeat(30)}\n`;
+        currentState.shapeDetection.ellipses.data.forEach((ellipse, i) => {
+            const angle = (ellipse.angle * 180 / Math.PI).toFixed(1);
+            text += `  Ellipse ${i+1}: center=(${ellipse.x.toFixed(1)},${ellipse.y.toFixed(1)}), ` +
+                   `a=${ellipse.a.toFixed(1)}, b=${ellipse.b.toFixed(1)}, angle=${angle}°\n`;
+        });
+    }
+    
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('Results copied to clipboard', 'success');
+    }).catch(() => {
+        showToast('Failed to copy results', 'error');
+    });
 }
 
 // Handle image click for snake points
@@ -654,31 +1153,6 @@ function drawContourPoints() {
     img.src = currentState.originalImage;
 }
 
-// Clear snake points
-function clearSnakePoints() {
-    if (!currentState.originalImage) {
-        showToast('Please upload an image first', 'error');
-        return;
-    }
-    
-    currentState.contourPoints = [];
-    currentState.snakeInitialized = false;
-    
-    // Restore original image
-    const originalPreview = document.getElementById('originalPreview');
-    if (originalPreview && currentState.originalImage) {
-        originalPreview.src = currentState.originalImage;
-    }
-    
-    // Update point count
-    const pointCount = document.getElementById('pointCount');
-    if (pointCount) {
-        pointCount.textContent = '0 points';
-    }
-    
-    showToast('Points cleared', 'info');
-}
-
 // Initialize snake
 async function initializeSnake() {
     if (currentState.contourPoints.length < 3) {
@@ -693,7 +1167,7 @@ async function initializeSnake() {
     formData.append('points', JSON.stringify(currentState.contourPoints));
     formData.append('alpha', document.getElementById('alpha').value || '0.5');
     formData.append('beta', document.getElementById('beta').value || '0.5');
-    formData.append('gamma', '1.0');
+    formData.append('gamma', document.getElementById('gamma').value || '1.0');
 
     try {
         console.log('Initializing snake with', currentState.contourPoints.length, 'points');
@@ -831,27 +1305,20 @@ async function analyzeContour() {
             }
         }
 
-        // Freeman overlay image
-        if (data.freeman_overlay) {
-            const img = document.getElementById('freemanOverlay');
-            if (img) {
-                img.src = data.freeman_overlay;
-                img.style.display = 'block';
-                Array.from(img.parentElement.children).forEach(el => {
-                    if (el !== img && el.tagName !== 'IMG') el.style.display = 'none';
-                });
-            }
-        }
-
         // Freeman direction image
         if (data.freeman_code_image) {
             const img = document.getElementById('freemanCodeImage');
             if (img) {
                 img.src = data.freeman_code_image;
                 img.style.display = 'block';
-                Array.from(img.parentElement.children).forEach(el => {
-                    if (el !== img && el.tagName !== 'IMG') el.style.display = 'none';
-                });
+                const parent = img.parentElement;
+                if (parent) {
+                    Array.from(parent.children).forEach(el => {
+                        if (el !== img && el.tagName !== 'IMG') {
+                            el.style.display = 'none';
+                        }
+                    });
+                }
             }
         }
 
@@ -869,36 +1336,6 @@ async function analyzeContour() {
     } finally {
         hideLoading();
     }
-}
-
-// Export results
-function exportResults() {
-    const perimeter = document.getElementById('perimeterValue').textContent;
-    const area = document.getElementById('areaValue').textContent;
-    const chainCodeBox = document.getElementById('chainCodeBox');
-    const chainCode = chainCodeBox ? chainCodeBox.textContent : '';
-
-    if (perimeter === '-' || area === '-') {
-        showToast('Please analyze contour first', 'error');
-        return;
-    }
-
-    const results = {
-        perimeter: parseFloat(perimeter),
-        area: parseFloat(area),
-        chain_code: chainCode,
-        timestamp: new Date().toISOString()
-    };
-
-    const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `contour_analysis_${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-
-    showToast('Results exported', 'success');
 }
 
 // Undo last operation
@@ -984,6 +1421,14 @@ async function resetImage() {
         currentState.snakeInitialized = false;
         currentState.history = [];
         
+        // Reset shape detection state
+        currentState.shapeDetection = {
+            lines: { count: 0, data: [] },
+            circles: { count: 0, data: [] },
+            ellipses: { count: 0, data: [] },
+            lastParams: null
+        };
+        
         const originalPreview = document.getElementById('originalPreview');
         const processedPreview = document.getElementById('processedPreview');
         
@@ -995,6 +1440,16 @@ async function resetImage() {
         if (pointCount) {
             pointCount.textContent = '0 points';
         }
+        
+        // Hide shape results
+        const shapeSummary = document.getElementById('shapeSummary');
+        if (shapeSummary) shapeSummary.style.display = 'none';
+        
+        const permanentResults = document.getElementById('permanentShapeResults');
+        if (permanentResults) permanentResults.style.display = 'none';
+        
+        // Reset shape counts in UI
+        updateShapeResultsUI();
 
         showToast('Image reset', 'success');
     } catch (error) {
@@ -1055,7 +1510,8 @@ function showLoading(message = 'Loading...') {
     // Check if we can show this inside the permanent Shape Results box
     const permanentCounts = document.getElementById('permanentShapeCounts');
     const permanentResults = document.getElementById('permanentShapeResults');
-    const shapeTabActive = document.getElementById('shape-tab') && document.getElementById('shape-tab').classList.contains('active');
+    const shapeTabActive = document.getElementById('shape-tab') && 
+                          document.getElementById('shape-tab').classList.contains('active');
     
     if (shapeTabActive && permanentCounts && permanentResults) {
         permanentResults.style.display = 'block';
@@ -1092,7 +1548,7 @@ function hideLoading() {
         delete permanentCounts.dataset.isLoading;
         // Only reset to "Ready to detect..." if we haven't already populated shapes into it
         if (permanentCounts.innerHTML.includes('Loading...')) {
-            permanentCounts.innerHTML = '<span class="text-muted" style="font-size: 0.85rem;">Ready to detect...</span>';
+            permanentCounts.innerHTML = '<span class="text-muted">Ready to detect...</span>';
         }
     }
 
@@ -1119,6 +1575,9 @@ function showToast(message, type = 'info') {
             break;
         case 'error':
             title = 'Error';
+            break;
+        case 'warning':
+            title = 'Warning';
             break;
         default:
             title = 'Info';
@@ -1154,6 +1613,85 @@ style.textContent = `
             transform: translateX(100%);
             opacity: 0;
         }
+    }
+    
+    .toast {
+        position: relative;
+        background: var(--bg-card);
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        border-left: 4px solid;
+        animation: slideIn 0.3s ease;
+        min-width: 280px;
+    }
+    
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    .toast.success { border-left-color: #28a745; }
+    .toast.error { border-left-color: #dc3545; }
+    .toast.warning { border-left-color: #ffc107; }
+    .toast.info { border-left-color: #17a2b8; }
+    
+    .toast-title {
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+    
+    .toast-message {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+    
+    .spinner-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+    
+    .spinner-content {
+        background: var(--bg-card);
+        padding: 20px 30px;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .spinner-text {
+        color: white;
+        font-size: 0.9rem;
     }
 `;
 document.head.appendChild(style);

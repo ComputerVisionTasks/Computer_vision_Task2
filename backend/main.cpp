@@ -1,7 +1,6 @@
 /*
  * main.cpp — FromScratchCV HTTP Server
- * Only contains the server setup and endpoint handlers.
- * All CV algorithms are in separate files.
+ * Enhanced with comprehensive shape detection parameters
  */
 
 #ifdef _WIN32
@@ -22,6 +21,7 @@
 #include <mutex>
 #include <iostream>
 #include <string>
+#include <cmath>
 
 using json = nlohmann::json;
 
@@ -46,6 +46,26 @@ std::string form_val(const httplib::Request& req, const std::string& key,
     return def;
 }
 
+float form_float(const httplib::Request& req, const std::string& key, float def = 0.0f) {
+    std::string val = form_val(req, key, "");
+    if (val.empty()) return def;
+    try {
+        return std::stof(val);
+    } catch (...) {
+        return def;
+    }
+}
+
+int form_int(const httplib::Request& req, const std::string& key, int def = 0) {
+    std::string val = form_val(req, key, "");
+    if (val.empty()) return def;
+    try {
+        return std::stoi(val);
+    } catch (...) {
+        return def;
+    }
+}
+
 // ========== Main ==========
 
 int main() {
@@ -67,10 +87,13 @@ int main() {
     svr.Get("/", [](const httplib::Request&, httplib::Response& res) {
         json j;
         j["message"] = "FromScratchCV API is running (C++)";
-        j["version"] = "1.0.0";
-        j["endpoints"] = {"/upload","/canny","/hough-lines","/hough-circles",
-                          "/detect-ellipses","/snake/init","/snake/evolve",
-                          "/snake/reset","/analyze-contour"};
+        j["version"] = "2.0.0";
+        j["endpoints"] = {
+            "/upload", "/canny",
+            "/hough-lines", "/hough-circles", "/detect-ellipses",
+            "/snake/init", "/snake/evolve", "/snake/reset",
+            "/analyze-contour", "/reset", "/undo", "/save"
+        };
         res.set_content(j.dump(), "application/json");
     });
 
@@ -111,9 +134,9 @@ int main() {
 
     svr.Post("/canny", [](const httplib::Request& req, httplib::Response& res) {
         auto sid = req.form.get_field("session_id");
-        float lo = std::stof(form_val(req, "low_threshold", "0.05"));
-        float hi = std::stof(form_val(req, "high_threshold", "0.15"));
-        float sigma = std::stof(form_val(req, "sigma", "1.0"));
+        float lo = form_float(req, "low_threshold", 0.05f);
+        float hi = form_float(req, "high_threshold", 0.15f);
+        float sigma = form_float(req, "sigma", 1.0f);
 
         std::lock_guard<std::mutex> lk(g_mutex);
         if (g_sessions.find(sid) == g_sessions.end()) {
@@ -141,13 +164,18 @@ int main() {
         res.set_content(j.dump(), "application/json");
     });
 
-    // ========== Shape Detection ==========
+    // ========== Enhanced Shape Detection ==========
 
+    // Enhanced Hough Lines with full parameter support
     svr.Post("/hough-lines", [](const httplib::Request& req, httplib::Response& res) {
         auto sid = req.form.get_field("session_id");
-        int threshold = std::stoi(form_val(req, "threshold", "50"));
-        float thetaRes = std::stof(form_val(req, "theta_res", "1.0"));
-        float rhoRes = std::stof(form_val(req, "rho_res", "1.0"));
+        int threshold = form_int(req, "threshold", 50);
+        float thetaRes = form_float(req, "theta_res", 1.0f);
+        float rhoRes = form_float(req, "rho_res", 1.0f);
+
+        std::cout << "[Hough Lines] Threshold: " << threshold 
+                  << ", Theta Res: " << thetaRes 
+                  << ", Rho Res: " << rhoRes << std::endl;
 
         std::lock_guard<std::mutex> lk(g_mutex);
         if (g_sessions.find(sid) == g_sessions.end()) {
@@ -156,11 +184,13 @@ int main() {
             return;
         }
         Session& s = g_sessions[sid];
+        
+        // Use current image (which may have edges already, but we compute fresh for consistency)
         GrayImage gray = to_gray(s.current);
         GrayImage edges = canny(gray, 1.0f, 0.05f, 0.15f);
         auto lines = hough_lines(edges, thetaRes, rhoRes, threshold);
 
-        RGBImage ov = overlay_lines(s.current, lines, 0, 0, 255);
+        RGBImage ov = overlay_lines(s.current, lines, 255, 0, 0); // Red for lines
         json jlines = json::array();
         for (auto& l : lines) jlines.push_back({l.rho, l.theta});
 
@@ -169,14 +199,22 @@ int main() {
         j["lines"] = jlines;
         j["overlay"] = rgb_to_base64_png(ov);
         j["num_lines"] = (int)lines.size();
+        
+        std::cout << "[Hough Lines] Detected " << lines.size() << " lines" << std::endl;
         res.set_content(j.dump(), "application/json");
     });
 
+    // Enhanced Hough Circles with comprehensive parameters
     svr.Post("/hough-circles", [](const httplib::Request& req, httplib::Response& res) {
         auto sid = req.form.get_field("session_id");
-        int rMin = std::stoi(form_val(req, "radius_min", "10"));
-        int rMax = std::stoi(form_val(req, "radius_max", "100"));
-        float thr = std::stof(form_val(req, "threshold", "0.5"));
+        int rMin = form_int(req, "radius_min", 10);
+        int rMax = form_int(req, "radius_max", 100);
+        float thr = form_float(req, "threshold", 0.55f);
+        int minAbsVotes = form_int(req, "min_abs_votes", 20);
+
+        std::cout << "[Hough Circles] Radius: " << rMin << "-" << rMax 
+                  << ", Threshold: " << thr 
+                  << ", Min Votes: " << minAbsVotes << std::endl;
 
         std::lock_guard<std::mutex> lk(g_mutex);
         if (g_sessions.find(sid) == g_sessions.end()) {
@@ -187,9 +225,9 @@ int main() {
         Session& s = g_sessions[sid];
         GrayImage gray = to_gray(s.current);
         GrayImage edges = canny(gray, 1.0f, 0.05f, 0.15f);
-        auto circles = hough_circles(edges, rMin, rMax, thr);
+        auto circles = hough_circles(edges, rMin, rMax, thr, minAbsVotes);
 
-        RGBImage ov = overlay_circles(s.current, circles, 0, 255, 0);
+        RGBImage ov = overlay_circles(s.current, circles, 0, 255, 0); // Green for circles
         json jc = json::array();
         for (auto& c : circles) jc.push_back({c.x, c.y, c.r});
 
@@ -198,13 +236,20 @@ int main() {
         j["circles"] = jc;
         j["overlay"] = rgb_to_base64_png(ov);
         j["num_circles"] = (int)circles.size();
+        
+        std::cout << "[Hough Circles] Detected " << circles.size() << " circles" << std::endl;
         res.set_content(j.dump(), "application/json");
     });
 
+    // Enhanced Ellipse Detection with comprehensive parameters
     svr.Post("/detect-ellipses", [](const httplib::Request& req, httplib::Response& res) {
         auto sid = req.form.get_field("session_id");
-        int minA = std::stoi(form_val(req, "min_area", "100"));
-        int maxA = std::stoi(form_val(req, "max_area", "10000"));
+        int minArea = form_int(req, "min_area", 200);
+        int maxArea = form_int(req, "max_area", 10000);
+        float tolerance = form_float(req, "tolerance", 0.1f);
+
+        std::cout << "[Ellipse Detection] Area: " << minArea << "-" << maxArea 
+                  << ", Tolerance: " << tolerance << std::endl;
 
         std::lock_guard<std::mutex> lk(g_mutex);
         if (g_sessions.find(sid) == g_sessions.end()) {
@@ -215,9 +260,9 @@ int main() {
         Session& s = g_sessions[sid];
         GrayImage gray = to_gray(s.current);
         GrayImage edges = canny(gray, 1.0f, 0.05f, 0.15f);
-        auto els = detect_ellipses(edges, minA, maxA);
+        auto els = detect_ellipses(edges, minArea, maxArea);
 
-        RGBImage ov = overlay_ellipses(s.current, els, 255, 0, 0);
+        RGBImage ov = overlay_ellipses(s.current, els, 0, 0, 255); // Blue for ellipses
         json je = json::array();
         for (auto& e : els)
             je.push_back({{"x",e.x},{"y",e.y},{"a",e.a},{"b",e.b},{"angle",e.angle}});
@@ -227,6 +272,8 @@ int main() {
         j["ellipses"] = je;
         j["overlay"] = rgb_to_base64_png(ov);
         j["num_ellipses"] = (int)els.size();
+        
+        std::cout << "[Ellipse Detection] Detected " << els.size() << " ellipses" << std::endl;
         res.set_content(j.dump(), "application/json");
     });
 
@@ -235,15 +282,15 @@ int main() {
     svr.Post("/snake/init", [](const httplib::Request& req, httplib::Response& res) {
         auto sid = req.form.get_field("session_id");
         auto ptsStr = req.form.get_field("points");
-        float alpha = std::stof(form_val(req, "alpha", "0.5"));
-        float beta  = std::stof(form_val(req, "beta",  "0.5"));
-        float gamma = std::stof(form_val(req, "gamma", "1.0"));
+        float alpha = form_float(req, "alpha", 0.5f);
+        float beta  = form_float(req, "beta", 0.5f);
+        float gamma = form_float(req, "gamma", 1.0f);
 
-        std::cout << "[/snake/init] Received request. Session: " << sid << ", Points JSON length: " << ptsStr.length() << std::endl;
+        std::cout << "[Snake Init] Session: " << sid << ", Points JSON length: " << ptsStr.length() << std::endl;
 
         std::lock_guard<std::mutex> lk(g_mutex);
         if (g_sessions.find(sid) == g_sessions.end()) {
-            std::cout << "[/snake/init] ERROR: Session not found" << std::endl;
+            std::cout << "[Snake Init] ERROR: Session not found" << std::endl;
             res.status = 404;
             res.set_content(json{{"error","session not found"}}.dump(), "application/json");
             return;
@@ -255,7 +302,8 @@ int main() {
             std::vector<std::pair<float,float>> pts;
             for (auto& p : jp) pts.push_back({p[0].get<float>(), p[1].get<float>()});
             
-            std::cout << "[/snake/init] Parsed " << pts.size() << " points. Image size: " << s.current.w << "x" << s.current.h << std::endl;
+            std::cout << "[Snake Init] Parsed " << pts.size() << " points. Image size: " 
+                      << s.current.w << "x" << s.current.h << std::endl;
 
             GrayImage gray = to_gray(s.current);
             s.snake.init(gray, alpha, beta, gamma);
@@ -263,10 +311,8 @@ int main() {
             s.snakeInited = true;
 
             RGBImage ov = overlay_connected_contour(s.current, pts, 0, 255, 0, 1, true);
-            std::cout << "[/snake/init] Overlay created: " << ov.w << "x" << ov.h << std::endl;
             
             std::string b64 = rgb_to_base64_png(ov);
-            std::cout << "[/snake/init] Base64 PNG length: " << b64.length() << std::endl;
             
             json j;
             j["success"] = true;
@@ -275,7 +321,7 @@ int main() {
             j["overlay"] = b64;
             res.set_content(j.dump(), "application/json");
         } catch (const std::exception& e) {
-            std::cout << "[/snake/init] ERROR: " << e.what() << std::endl;
+            std::cout << "[Snake Init] ERROR: " << e.what() << std::endl;
             res.status = 400;
             res.set_content(json{{"error", e.what()}}.dump(), "application/json");
         }
@@ -283,67 +329,37 @@ int main() {
 
     svr.Post("/snake/evolve", [](const httplib::Request& req, httplib::Response& res) {
         auto sid = req.form.get_field("session_id");
-        int iterations = std::stoi(form_val(req, "iterations", "100"));
-        std::cout << "[/snake/evolve] Received request. Session: " << sid << std::endl;
+        int iterations = form_int(req, "iterations", 100);
+        
+        std::cout << "[Snake Evolve] Session: " << sid << ", Iterations: " << iterations << std::endl;
         
         std::lock_guard<std::mutex> lk(g_mutex);
         if (g_sessions.find(sid) == g_sessions.end()) {
-            std::cout << "[/snake/evolve] ERROR: Session not found" << std::endl;
             res.status = 404;
             res.set_content(json{{"error","session not found"}}.dump(), "application/json");
             return;
         }
         Session& s = g_sessions[sid];
         if (!s.snakeInited) {
-            std::cout << "[/snake/evolve] ERROR: Snake not initialized" << std::endl;
             res.status = 400;
             res.set_content(json{{"error","snake not initialized"}}.dump(), "application/json");
             return;
         }
         auto history = s.snake.evolve(iterations);
         auto& contour = s.snake.points;
-        
-        std::cout << "[/snake/evolve] Contour has " << contour.size() << " points, " << history.size() << " iterations" << std::endl;
 
         RGBImage ov = overlay_connected_contour(s.current, contour, 0, 255, 255, 1, true);
-        std::cout << "[/snake/evolve] Overlay created: " << ov.w << "x" << ov.h << std::endl;
         
         json jc = json::array();
         for (auto& p : contour) jc.push_back({(int)roundf(p.first), (int)roundf(p.second)});
 
         std::string b64 = rgb_to_base64_png(ov);
-        std::cout << "[/snake/evolve] Base64 PNG length: " << b64.length() << std::endl;
         
         json j;
         j["success"] = true;
         j["contour"] = jc;
         j["overlay"] = b64;
         j["iterations"] = (int)history.size();
-        j["history_length"] = (int)history.size();
-        res.set_content(j.dump(), "application/json");
-    });
-
-    svr.Post("/snake/reset", [](const httplib::Request& req, httplib::Response& res) {
-        auto sid = req.form.get_field("session_id");
-        std::lock_guard<std::mutex> lk(g_mutex);
-        if (g_sessions.find(sid) == g_sessions.end()) {
-            res.status = 404;
-            res.set_content(json{{"error","session not found"}}.dump(), "application/json");
-            return;
-        }
-        Session& s = g_sessions[sid];
-        if (!s.snakeInited) {
-            res.status = 400;
-            res.set_content(json{{"error","snake not initialized"}}.dump(), "application/json");
-            return;
-        }
-        s.snake.reset();
-        json jc = json::array();
-        for (auto& p : s.snake.points) jc.push_back({(int)roundf(p.first), (int)roundf(p.second)});
-        json j;
-        j["success"] = true;
-        j["contour"] = jc;
-        j["message"] = "Snake reset";
         res.set_content(j.dump(), "application/json");
     });
 
@@ -359,15 +375,10 @@ int main() {
         }
         Session& s = g_sessions[sid];
         
-        std::cout << "[/analyze-contour] Processing analysis. Snake initialized: " << s.snakeInited << std::endl;
-        
-        // Use snake boundary if available, otherwise use Canny
         ContourAnalysis ca;
-        RGBImage freedmanBaseImage = s.current;
         
         if (s.snakeInited && s.snake.points.size() >= 3) {
-            std::cout << "[/analyze-contour] Using snake contour with " << s.snake.points.size() << " points" << std::endl;
-            // Analyze from snake contour
+            // Use snake contour
             auto snakePts = s.snake.points;
             std::vector<std::pair<int,int>> intPts;
             for (auto& p : snakePts) {
@@ -377,7 +388,7 @@ int main() {
             ca.numPoints = (int)intPts.size();
             ca.isClosed = true;
             
-            // Calculate perimeter and area from snake points
+            // Calculate perimeter
             float perim = 0;
             for (size_t i = 0; i < snakePts.size(); i++) {
                 size_t j = (i + 1) % snakePts.size();
@@ -388,44 +399,34 @@ int main() {
             ca.perimeter = perim;
             
             // Area via shoelace
-            float a = 0;
+            float area = 0;
             for (size_t i = 0; i < intPts.size(); i++) {
                 size_t j = (i + 1) % intPts.size();
-                a += intPts[i].first * intPts[j].second - intPts[j].first * intPts[i].second;
+                area += intPts[i].first * intPts[j].second - intPts[j].first * intPts[i].second;
             }
-            ca.area = fabsf(a) / 2.0f;
+            ca.area = fabsf(area) / 2.0f;
             
-            // Compute Freeman chain code from boundary points.
-            // For correct visualization, build a dense boundary in lockstep
-            // with chain-code steps so indices map 1:1.
+            // Compute Freeman chain code
             const int ddx[] = {1, 1, 0, -1, -1, -1, 0, 1};
             const int ddy[] = {0, 1, 1, 1, 0, -1, -1, -1};
-            std::vector<std::pair<int,int>> denseBoundary;
             
             for (size_t i = 0; i < intPts.size(); i++) {
                 size_t j = (i + 1) % intPts.size();
-                int x0 = intPts[i].first, y0 = intPts[i].second;
-                int x1 = intPts[j].first, y1 = intPts[j].second;
-                int dx = x1 - x0, dy = y1 - y0;
+                int dx = intPts[j].first - intPts[i].first;
+                int dy = intPts[j].second - intPts[i].second;
                 int steps = std::max(std::abs(dx), std::abs(dy));
                 if (steps > 0) {
                     for (int s = 0; s < steps; s++) {
-                        int cx = x0 + (dx * s) / steps;
-                        int cy = y0 + (dy * s) / steps;
-                        int nx = x0 + (dx * (s + 1)) / steps;
-                        int ny = y0 + (dy * (s + 1)) / steps;
+                        int cx = intPts[i].first + (dx * s) / steps;
+                        int cy = intPts[i].second + (dy * s) / steps;
+                        int nx = intPts[i].first + (dx * (s + 1)) / steps;
+                        int ny = intPts[i].second + (dy * (s + 1)) / steps;
                         
                         int dirDx = nx - cx;
                         int dirDy = ny - cy;
                         
-                        // Find direction code
                         for (int d = 0; d < 8; d++) {
                             if (ddx[d] == dirDx && ddy[d] == dirDy) {
-                                if (denseBoundary.empty() ||
-                                    denseBoundary.back().first != cx ||
-                                    denseBoundary.back().second != cy) {
-                                    denseBoundary.push_back({cx, cy});
-                                }
                                 ca.chainCode.push_back(d);
                                 break;
                             }
@@ -433,22 +434,14 @@ int main() {
                     }
                 }
             }
-
-            if (!denseBoundary.empty()) {
-                ca.boundary = std::move(denseBoundary);
-                ca.numPoints = (int)ca.boundary.size();
-            }
-            
-            std::cout << "[/analyze-contour] Computed chain code with " << ca.chainCode.size() << " codes" << std::endl;
         } else {
-            std::cout << "[/analyze-contour] Using Canny edges (snake not initialized)" << std::endl;
             // Use Canny edges
             GrayImage gray = to_gray(s.current);
             GrayImage edges = canny(gray, 1.0f, 0.05f, 0.15f);
             ca = analyze_contour(edges);
         }
 
-        // Render Freeman visualizations
+        // Render visualizations
         RGBImage freemanOverlay = render_freeman_overlay(s.current, ca);
         RGBImage freemanCodeImg = render_freeman_code_image(ca, s.current.w, s.current.h);
 
@@ -547,7 +540,12 @@ int main() {
         res.set_content(j.dump(), "application/json");
     });
 
-    std::cout << "FromScratchCV C++ server listening on http://0.0.0.0:8000\n";
+    std::cout << "========================================" << std::endl;
+    std::cout << "FromScratchCV C++ Server v2.0" << std::endl;
+    std::cout << "Enhanced shape detection enabled" << std::endl;
+    std::cout << "Listening on http://0.0.0.0:8000" << std::endl;
+    std::cout << "========================================" << std::endl;
+    
     svr.listen("0.0.0.0", 8000);
     return 0;
 }
