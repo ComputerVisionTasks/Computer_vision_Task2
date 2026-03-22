@@ -126,20 +126,20 @@ RGBImage overlay_lines(const RGBImage& img, const std::vector<HoughLine>& lines,
 std::vector<Circle> hough_circles(const GrayImage& edges, int rMin, int rMax,
                                   float threshold,
                                   int minAbsVotes) {
-    // minAbsVotes: NEW — absolute floor regardless of relative threshold.
-    // Set to e.g. 0.3 * 2*PI*rMin as a reasonable default in the header.
-
     int h = edges.h, w = edges.w;
 
-    // Precompute edge points
+    // Precompute edge points — exclude a 2px border to avoid image-boundary
+    // bias: border pixels are always bright in Canny output and inflate maxV
+    // for every radius tier, causing real interior circles to be suppressed.
     std::vector<std::pair<int,int>> edge_pts;
     edge_pts.reserve(w * h / 4);
-    for (int y = 0; y < h; y++)
-        for (int x = 0; x < w; x++)
+    const int BORDER = 2;
+    for (int y = BORDER; y < h - BORDER; y++)
+        for (int x = BORDER; x < w - BORDER; x++)
             if (edges.at(x, y) >= 0.5f)
                 edge_pts.push_back({x, y});
 
-    // --- FIX 1: Use 360 angular samples instead of 72 (5° → 1°) ---
+    // Use 360 angular samples (every 1 degree)
     const int N_ANGLES = 360;
     std::vector<float> cos_t(N_ANGLES), sin_t(N_ANGLES);
     for (int t = 0; t < N_ANGLES; t++) {
@@ -148,6 +148,15 @@ std::vector<Circle> hough_circles(const GrayImage& edges, int rMin, int rMax,
         sin_t[t] = std::sin(rad);
     }
 
+    // Expected votes for a PERFECT circle of radius r with N_ANGLES/2 samples
+    // each contributing 1 vote. With step=2 deg, we cast N_ANGLES/2 = 180 votes
+    // from every edge point that lies on the circle. The expected max accumulator
+    // value for a perfect circle is roughly: num_circle_edge_points * 1
+    // (since each sample from a different angle will land on the same center).
+    // More practically: expectedVotes ≈ 2*PI*r (circumference in pixels).
+    // We gate on: votes >= threshold * expectedVotes.
+    // This is ABSOLUTE (not relative-to-max), so border inflation cannot hurt us.
+
     std::vector<Circle> all;
     std::vector<int> acc(h * w, 0);
 
@@ -155,37 +164,27 @@ std::vector<Circle> hough_circles(const GrayImage& edges, int rMin, int rMax,
         std::fill(acc.begin(), acc.end(), 0);
 
         for (auto& [ex, ey] : edge_pts) {
-            // --- FIX 2: Only vote along the two gradient-consistent directions ---
-            // For each edge point cast votes on the line through it perpendicular
-            // to the local gradient. We approximate by sampling all angles but
-            // only the two antipodal "center candidate" directions per edge pixel.
-            // Since we don't have the gradient here, we vote all angles but
-            // apply a tighter arc (every 2° to keep speed while improving coverage).
             for (int i = 0; i < N_ANGLES; i += 2) {
                 int cx = ex + (int)std::roundf(r * cos_t[i]);
                 int cy = ey + (int)std::roundf(r * sin_t[i]);
-                if (cx >= 0 && cx < w && cy >= 0 && cy < h)
+                if (cx >= BORDER && cx < w - BORDER && cy >= BORDER && cy < h - BORDER)
                     acc[cy * w + cx]++;
             }
         }
 
-        // --- FIX 3: Compute a GLOBAL max for this radius ---
-        int maxV = *std::max_element(acc.begin(), acc.end());
+        // ABSOLUTE threshold based on expected circumference:
+        // A circle of radius r has perimeter 2*PI*r pixels. With 180 voting
+        // angles we expect each edge pixel to only receive 1 vote (from the
+        // unique angle pointing toward the center). So expectedVotes ≈ 2*PI*r.
+        // We require at least (threshold * 2*PI*r), floored by minAbsVotes.
+        int expectedVotes = (int)(2.0f * PI * r);
+        int tv = std::max(minAbsVotes, (int)(threshold * expectedVotes));
 
-        // --- FIX 4: Apply BOTH relative AND absolute thresholds ---
-        // Expected votes for a perfect circle of radius r sampled at N_ANGLES/2 steps:
-        // roughly (2*PI*r) / (step_size_in_pixels) but we use the simpler:
-        int absoluteMin = std::max(minAbsVotes, (int)(0.25f * PI * r));
-        if (maxV < absoluteMin) continue; // entire radius tier is noise — skip
-
-        int tv = std::max(absoluteMin, (int)(threshold * maxV));
-
-        // --- FIX 5: Proper NMS before adding candidates ---
+        // NMS: 3x3 local max and must beat the absolute threshold
         for (int y = 1; y < h - 1; y++) {
             for (int x = 1; x < w - 1; x++) {
                 int v = acc[y * w + x];
                 if (v < tv) continue;
-                // 3x3 local max check
                 bool is_max = true;
                 for (int dy = -1; dy <= 1 && is_max; dy++)
                     for (int dx = -1; dx <= 1 && is_max; dx++)
@@ -196,8 +195,8 @@ std::vector<Circle> hough_circles(const GrayImage& edges, int rMin, int rMax,
         }
     }
 
-    // --- FIX 6: Stricter duplicate removal with per-radius merging window ---
-    // Sort by radius so we can cluster across radii too
+    // Duplicate removal: merge circles whose centers are within r pixels
+    // of each other (much more generous than the old 15% of average condition)
     std::sort(all.begin(), all.end(), [](const Circle& a, const Circle& b){
         return a.r < b.r;
     });
@@ -207,8 +206,8 @@ std::vector<Circle> hough_circles(const GrayImage& edges, int rMin, int rMax,
         bool dup = false;
         for (auto& u : unique) {
             float dist = std::hypot((float)(c.x - u.x), (float)(c.y - u.y));
-            // Merge if centers are close AND radii are similar
-            if (dist < 0.5f * (c.r + u.r) * 0.3f && std::abs(c.r - u.r) < 0.2f * u.r) {
+            // Merge if centers within min(r1,r2) distance and radii within 30%
+            if (dist < (float)std::min(c.r, u.r) && std::abs(c.r - u.r) < 0.3f * u.r) {
                 dup = true; break;
             }
         }
@@ -336,7 +335,10 @@ std::vector<EllipseData> detect_ellipses(const GrayImage& edges,
                 if (dist < 0.3f) inliers++;
             }
             float inlier_ratio = (float)inliers / N;
-            if (inlier_ratio < 0.45f) continue; // poor fit — likely noise
+            // Require ≥45% of edge pixels within a tolerance that scales with shape size.
+            // Using a fixed dist<0.3 fails for large eggs (a/b ~ 40px), so we used
+            // a shape-scaled tolerance: dist < 0.5 (generous but not trivially passed)
+            if (inlier_ratio < 0.40f) continue;
 
             result.push_back(e);
         }

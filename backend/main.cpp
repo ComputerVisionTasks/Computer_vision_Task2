@@ -187,7 +187,9 @@ int main() {
         
         // Use current image (which may have edges already, but we compute fresh for consistency)
         GrayImage gray = to_gray(s.current);
-        GrayImage edges = canny(gray, 1.0f, 0.05f, 0.15f);
+        // Use sigma=1.4 for shape detection: more smoothing → cleaner longer
+        // edges, fewer broken fragments → better Hough accumulation.
+        GrayImage edges = canny(gray, 1.4f, 0.04f, 0.12f);
         auto lines = hough_lines(edges, thetaRes, rhoRes, threshold);
 
         RGBImage ov = overlay_lines(s.current, lines, 255, 0, 0); // Red for lines
@@ -224,7 +226,7 @@ int main() {
         }
         Session& s = g_sessions[sid];
         GrayImage gray = to_gray(s.current);
-        GrayImage edges = canny(gray, 1.0f, 0.05f, 0.15f);
+        GrayImage edges = canny(gray, 1.4f, 0.04f, 0.12f);
         auto circles = hough_circles(edges, rMin, rMax, thr, minAbsVotes);
 
         RGBImage ov = overlay_circles(s.current, circles, 0, 255, 0); // Green for circles
@@ -259,7 +261,7 @@ int main() {
         }
         Session& s = g_sessions[sid];
         GrayImage gray = to_gray(s.current);
-        GrayImage edges = canny(gray, 1.0f, 0.05f, 0.15f);
+        GrayImage edges = canny(gray, 1.4f, 0.04f, 0.12f);
         auto els = detect_ellipses(edges, minArea, maxArea);
 
         RGBImage ov = overlay_ellipses(s.current, els, 0, 0, 255); // Blue for ellipses
