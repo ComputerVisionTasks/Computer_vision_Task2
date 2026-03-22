@@ -280,7 +280,7 @@
     </div>
 
     <!-- Right Column - Run Button with improved styling -->
-    <div class="col-md-4 d-flex align-items-end">
+    <div class="col-md-4 d-flex flex-column gap-2">
       <div class="run-button-container">
         <button class="btn run-button" id="runCanny" type="button" disabled>
           <div class="button-content">
@@ -316,8 +316,8 @@
                 <span class="shape-type-label">Lines</span>
               </label>
             </div>
-            <div class="shape-color-indicator" style="background: #ff4444;"></div>
-            <div class="shape-params-preview" id="linesPreview">0 detected</div>
+          
+            
           </div>
         </div>
         <div class="col-md-4">
@@ -328,8 +328,8 @@
                 <span class="shape-type-label">Circles</span>
               </label>
             </div>
-            <div class="shape-color-indicator" style="background: #44ff44;"></div>
-            <div class="shape-params-preview" id="circlesPreview">0 detected</div>
+          
+            
           </div>
         </div>
         <div class="col-md-4">
@@ -340,8 +340,8 @@
                 <span class="shape-type-label">Ellipses</span>
               </label>
             </div>
-            <div class="shape-color-indicator" style="background: #4444ff;"></div>
-            <div class="shape-params-preview" id="ellipsesPreview">0 detected</div>
+          
+           
           </div>
         </div>
       </div>
@@ -704,9 +704,9 @@
                     <!-- Left Column - Sliders (70% width) -->
                     <div class="col-md-8">
                       <!-- Alert for instructions -->
-                      <div class="alert alert-info mb-3" id="snakeInstruction">
+                      <div class="alert alert-info" id="snakeInstruction">
                         <i class="bi bi-info-circle me-2"></i>Click on the original image to add contour points. Click 'Initialize Contour' when done.
-                        <span class="badge bg-secondary ms-2" id="pointCount">0 points</span>
+                        <span class="badge bg-secondary ms-1" id="pointCount">0 points</span>
                       </div>
 
                       <!-- First Row - Alpha and Beta Sliders -->
