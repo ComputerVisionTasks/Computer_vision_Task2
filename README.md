@@ -22,30 +22,29 @@
 
 ---
 
-## 📋 Table of Contents
+##  Table of Contents
 
 - [Overview](#-overview)
 - [Architecture](#-architecture)
 - [Features](#-features)
-  - [🔍 Canny Edge Detection](#-canny-edge-detection)
-  - [📐 Shape Detection](#-shape-detection)
+  - [ Canny Edge Detection](#-canny-edge-detection)
+  - [ Shape Detection](#-shape-detection)
     - [Hough Lines](#hough-lines)
     - [Hough Circles](#hough-circles)
     - [Ellipse Detection](#ellipse-detection)
-  - [🐍 Active Contour (Snake)](#-active-contour-snake)
-  - [📊 Contour Analysis](#-contour-analysis)
+  - [Active Contour (Snake)](#-active-contour-snake)
+  - [Contour Analysis](#-contour-analysis)
 - [Project Structure](#-project-structure)
 - [Getting Started](#-getting-started)
   - [Prerequisites](#prerequisites)
   - [Build with CMake](#build-with-cmake)
   - [Build Manually (GCC/MinGW)](#build-manually-gccmingw)
   - [Run the Application](#run-the-application)
-- [API Reference](#-api-reference)
 - [Algorithm References](#-algorithm-references)
 
 ---
 
-## 🔬 Overview
+## Overview
 
 **FromScratchCV** is a complete computer vision web application where every algorithm is implemented entirely from scratch in **C++17** — no OpenCV, no image processing libraries.
 
@@ -59,7 +58,7 @@ This project covers **Task 2** requirements:
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
 ```
 FromScratchCV/
@@ -105,9 +104,9 @@ Browser Canvas ← operation.js renders shapes on image ←
 
 ---
 
-## ✨ Features
+## Features
 
-### 🔍 Canny Edge Detection
+### Canny Edge Detection
 
 A full, multi-step implementation of the classic Canny edge detector:
 
@@ -122,7 +121,7 @@ A full, multi-step implementation of the classic Canny edge detector:
 
 **Output:** Binary edge image overlaid on original, configurable blend.
 
-> **📸 Screenshot Placeholder**
+> **Screenshot Placeholder**
 > 
 > ![Canny Edge Detection Result](UI_output/<!-- canny_output.png -->)
 > 
@@ -130,7 +129,7 @@ A full, multi-step implementation of the classic Canny edge detector:
 
 ---
 
-### 📐 Shape Detection
+### Shape Detection
 
 All three shape detectors run a fresh Canny pass (with σ=1.4 for better edge quality) before detection and return the detected shape coordinates as JSON alongside the annotated image.
 
@@ -175,13 +174,13 @@ Standard Hough Circle Transform with crucial improvements over a naïve implemen
 
 #### Ellipse Detection
 
-> ⚠️ **Work in Progress** — This section will be completed once the ellipse detection algorithm is finalized.
+> **Work in Progress** — This section will be completed once the ellipse detection algorithm is finalized.
 
 *Ellipse detection results and documentation will be added here.*
 
 ---
 
-### 🐍 Active Contour (Snake)
+### Active Contour (Snake)
 
 Implementation of the **Greedy Snake Algorithm** (Williams & Shah, 1992):
 
@@ -211,7 +210,7 @@ $$E_{total} = \alpha \cdot E_{cont} + \beta \cdot E_{curv} + \gamma \cdot E_{ext
 
 ---
 
-### 📊 Contour Analysis
+### Contour Analysis
 
 Analyzes the detected snake contour using **Freeman Chain Code** (8-directional):
 
@@ -247,7 +246,7 @@ Analyzes the detected snake contour using **Freeman Chain Code** (8-directional)
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 backend/algorithms/
@@ -260,7 +259,7 @@ backend/algorithms/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -328,28 +327,9 @@ Navigate to **`http://localhost:8080/Frontend/operation.html`**
 
 ---
 
-## 🌐 API Reference
 
-All endpoints accept `multipart/form-data` POST requests. All responses return JSON.
 
-| Endpoint | Method | Key Parameters | Returns |
-|---|---|---|---|
-| `/upload` | POST | `file`, `session_id` | `{ original, processed }` (base64 PNG) |
-| `/canny` | POST | `session_id`, `sigma`, `low_threshold`, `high_threshold` | `{ processed, overlay }` |
-| `/hough-lines` | POST | `session_id`, `threshold`, `theta_res`, `rho_res` | `{ lines: [[rho, theta], ...], num_lines }` |
-| `/hough-circles` | POST | `session_id`, `radius_min`, `radius_max`, `threshold`, `min_abs_votes` | `{ circles: [[x, y, r], ...], num_circles }` |
-| `/detect-ellipses` | POST | `session_id`, `min_area`, `max_area`, `tolerance` | `{ ellipses: [{x,y,a,b,angle}, ...], num_ellipses }` |
-| `/snake/init` | POST | `session_id`, `points` (JSON), `alpha`, `beta`, `gamma` | `{ success }` |
-| `/snake/evolve` | POST | `session_id`, `iterations` | `{ snake_points: [...], overlay }` |
-| `/snake/reset` | POST | `session_id` | `{ success }` |
-| `/analyze-contour` | POST | `session_id` | `{ chain_code, perimeter, area, num_points, is_closed, overlay, code_image }` |
-| `/undo` | POST | `session_id` | `{ processed }` |
-| `/reset` | POST | `session_id` | `{ original }` |
-| `/save` | POST | `session_id` | `{ image }` (base64 PNG for download) |
-
----
-
-## 📚 Algorithm References
+## Algorithm References
 
 1. **Canny Edge Detector** — Canny, J., *"A Computational Approach to Edge Detection"*, IEEE Trans. Pattern Analysis and Machine Intelligence, 1986.
 2. **Hough Line Transform** — Duda, R. O. and Hart, P. E., *"Use of the Hough Transformation to Detect Lines and Curves in Pictures"*, Comm. ACM, 1972.
@@ -360,6 +340,3 @@ All endpoints accept `multipart/form-data` POST requests. All responses return J
 
 ---
 
-<p align="center">
-  Made with ❤️ — Computer Vision from Scratch
-</p>
