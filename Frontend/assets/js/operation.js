@@ -1213,6 +1213,10 @@ async function runSnakeEvolution() {
     const formData = new FormData();
     formData.append('session_id', currentState.sessionId);
     formData.append('iterations', document.getElementById('iterations').value);
+    formData.append('alpha', document.getElementById('alpha').value || '0.5');
+    formData.append('beta', document.getElementById('beta').value || '0.5');
+    formData.append('gamma', document.getElementById('gamma').value || '1.0');
+    formData.append('restart', '1');
 
     try {
         console.log('Running snake evolution...');
@@ -1237,7 +1241,11 @@ async function runSnakeEvolution() {
         
         currentState.contourPoints = data.contour;
         
-        showToast(`Snake evolved (${data.iterations} iterations)`, 'success');
+        const used = data.params || {};
+        showToast(
+            `Snake evolved (${data.iterations} iterations) - a=${Number(used.alpha ?? 0).toFixed(2)}, b=${Number(used.beta ?? 0).toFixed(2)}, g=${Number(used.gamma ?? 0).toFixed(2)}`,
+            'success'
+        );
     } catch (error) {
         console.error('Snake evolution error:', error);
         showToast('Failed to evolve snake: ' + error.message, 'error');
