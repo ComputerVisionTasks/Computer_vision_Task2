@@ -119,13 +119,11 @@ A full, multi-step implementation of the classic Canny edge detector:
 
 **Output:** Binary edge image overlaid on original, configurable blend.
 
-> **Screenshot Placeholder**
-> 
-> ![Canny Edge Detection Result](UI_output/<!-- canny_output.png -->)
-> 
-> *Replace with: `UI_output/canny_output.png`*
+<p align="center">
+  <img src="UI_output/canny.png" alt="Canny Enge Detection" width="70%"/>
+</p>
+<p align="center"><i>Canny Edge Detection </i></p>
 
----
 
 ### Shape Detection
 
