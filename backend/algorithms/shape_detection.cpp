@@ -3,7 +3,8 @@
  * Improved: NMS, gradient-direction voting, absolute+relative thresholds,
  *           proper duplicate suppression, and better ellipse validation.
  */
-
+#include <iostream>
+#include <ostream>
 #include "shape_detection.h"
 #include <queue>
 #include <numeric>
@@ -232,37 +233,63 @@ RGBImage overlay_circles(const RGBImage& img, const std::vector<Circle>& circles
 
 // ========== Ellipse Detection ==========
 
+GrayImage dilate_edges(const GrayImage& input) {
+    GrayImage output = input;
+    // Offset by 2 to prevent boundary overflow due to 5x5 kernel
+    for (int y = 2; y < input.h - 2; y++) {
+        for (int x = 2; x < input.w - 2; x++) {
+            if (input.at(x, y) > 0.5f) {
+                // Apply 5x5 dilation kernel around the white pixel
+                for (int dy = -2; dy <= 2; dy++) {
+                    for (int dx = -2; dx <= 2; dx++) {
+                        output.at(x + dx, y + dy) = 1.0f; 
+                    }
+                }
+            }
+        }
+    }
+    return output;
+}
+
 std::vector<EllipseData> detect_ellipses(const GrayImage& edges,
-                                          int minArea, int maxArea) {
+                                          int minArea, int maxArea, float tolerance, float inlierRatio, 
+                                          float minAspect) {
+    // 1. Dilation to ensure edge connectivity
+    GrayImage dilated = dilate_edges(edges);
+    
     int h = edges.h, w = edges.w;
     std::vector<bool> visited(h * w, false);
     std::vector<EllipseData> result;
 
     for (int sy = 0; sy < h; sy++) {
         for (int sx = 0; sx < w; sx++) {
-            if (edges.at(sx, sy) < 0.5f || visited[sy * w + sx]) continue;
+            // Check dilated image for starting points
+            if (dilated.at(sx, sy) < 0.5f || visited[sy * w + sx]) continue;
 
-            // BFS flood-fill connected component
+            // BFS flood-fill to group connected components
             std::queue<std::pair<int,int>> q;
             std::vector<std::pair<int,int>> comp;
             q.push({sx, sy});
             visited[sy * w + sx] = true;
+
             while (!q.empty()) {
                 auto [qx, qy] = q.front(); q.pop();
                 comp.push_back({qx, qy});
-                for (int dy = -1; dy <= 1; dy++)
+                for (int dy = -1; dy <= 1; dy++) {
                     for (int dx = -1; dx <= 1; dx++) {
                         int nx = qx + dx, ny = qy + dy;
                         if (nx >= 0 && nx < w && ny >= 0 && ny < h &&
-                            !visited[ny * w + nx] && edges.at(nx, ny) >= 0.5f) {
+                            !visited[ny * w + nx] && dilated.at(nx, ny) >= 0.5f) {
                             visited[ny * w + nx] = true;
                             q.push({nx, ny});
                         }
                     }
+                }
             }
-            if ((int)comp.size() < 15) continue; // too few points
 
-            // Bounding box
+            if ((int)comp.size() < 5) continue; 
+
+            // Calculate Bounding Box and Centroid
             int xmin = w, ymin = h, xmax = 0, ymax = 0;
             double sum_x = 0, sum_y = 0;
             for (auto& [px, py] : comp) {
@@ -272,33 +299,23 @@ std::vector<EllipseData> detect_ellipses(const GrayImage& edges,
             }
 
             int box_area = (xmax - xmin + 1) * (ymax - ymin + 1);
-            if (box_area < minArea || box_area > maxArea) continue;
+            if (box_area < minArea || box_area > maxArea) continue; 
 
-            // --- FIX 1: Ellipse perimeter approximation check ---
-            // A real ellipse edge-component should be mostly hollow (perimeter-like).
-            // The number of edge pixels should be proportional to the expected
-            // perimeter, not the full area.
+            // Ramanujan's perimeter approximation for filtering
             int bw = xmax - xmin + 1, bh = ymax - ymin + 1;
-            float expected_perimeter =
-                PI * (3.0f * (bw + bh) / 2.0f -
-                      std::sqrt((float)(3 * bw + bh) * (bw + 3 * bh))) / 2.0f;
+            float h_param = std::pow((float)bw - bh, 2) / std::pow((float)bw + bh, 2);
+            float expected_perimeter = 3.14159f * (bw + bh) * (1.0f + (3.0f * h_param) / (10.0f + std::sqrt(4.0f - 3.0f * h_param)));
             float perim_ratio = (float)comp.size() / expected_perimeter;
-            // If far more points than a perimeter, it's a solid blob — skip
-            if (perim_ratio > 3.0f) continue;
-            // If far too few, the arc is too fragmented to fit reliably
-            if (perim_ratio < 0.2f) continue;
 
+            // Calculate moments for ellipse properties
             int N = (int)comp.size();
             double cx = sum_x / N;
             double cy = sum_y / N;
 
-            // Second-order central moments
             double cxx = 0, cyy = 0, cxy = 0;
             for (auto& [px, py] : comp) {
                 double dx = px - cx, dy = py - cy;
-                cxx += dx * dx;
-                cyy += dy * dy;
-                cxy += dx * dy;
+                cxx += dx * dx; cyy += dy * dy; cxy += dx * dy;
             }
             cxx /= N; cyy /= N; cxy /= N;
 
@@ -309,36 +326,32 @@ std::vector<EllipseData> detect_ellipses(const GrayImage& edges,
             double l2 = std::max(0.0, (term1 - term2) / 2.0);
 
             EllipseData e;
-            e.x = (float)cx;
-            e.y = (float)cy;
-            e.a = (float)std::max(1.0, std::sqrt(2.0 * l1));
+            e.x = (float)cx; e.y = (float)cy;
+            e.a = (float)std::max(1.0, std::sqrt(2.0 * l1)); 
             e.b = (float)std::max(1.0, std::sqrt(2.0 * l2));
             e.angle = (float)(0.5 * std::atan2(2.0 * cxy, diff));
 
-            // --- FIX 2: Aspect ratio guard — reject degenerate ellipses ---
-            if (e.b < 1.0f || e.a / e.b > 10.0f) continue;
+            // Filter by aspect ratio
+            float current_ratio = (e.a > 0) ? (e.b / e.a) : 0;
+            if (current_ratio < minAspect) continue;
 
-            // --- FIX 3: Validate fitted ellipse against actual edge points ---
-            // Count how many edge points land near the fitted ellipse curve.
-            // Reject if less than 50% of points are close to it.
+            // Inlier detection using algebraic distance
             float ca = std::cos(e.angle), sa = std::sin(e.angle);
             int inliers = 0;
             float inv_a2 = 1.0f / (e.a * e.a);
             float inv_b2 = 1.0f / (e.b * e.b);
+            
             for (auto& [px, py] : comp) {
-                float dx = (float)(px - cx);
-                float dy = (float)(py - cy);
-                float u =  dx * ca + dy * sa;
-                float v = -dx * sa + dy * ca;
-                // Algebraic distance to ellipse: |u²/a² + v²/b² - 1|
+                float dx = (float)(px - cx), dy = (float)(py - cy);
+                float u = dx * ca + dy * sa, v = -dx * sa + dy * ca;
                 float dist = std::abs(u * u * inv_a2 + v * v * inv_b2 - 1.0f);
-                if (dist < 0.3f) inliers++;
+                if (dist < tolerance) inliers++;
             }
-            float inlier_ratio = (float)inliers / N;
-            // Require ≥45% of edge pixels within a tolerance that scales with shape size.
-            // Using a fixed dist<0.3 fails for large eggs (a/b ~ 40px), so we used
-            // a shape-scaled tolerance: dist < 0.5 (generous but not trivially passed)
-            if (inlier_ratio < 0.40f) continue;
+
+            float final_inlier_ratio = (float)inliers / N;
+
+            // Validate against inlier ratio threshold
+            if (final_inlier_ratio < inlierRatio) continue;
 
             result.push_back(e);
         }
@@ -347,17 +360,20 @@ std::vector<EllipseData> detect_ellipses(const GrayImage& edges,
 }
 
 RGBImage overlay_ellipses(const RGBImage& img, const std::vector<EllipseData>& ellipses,
-                          unsigned char r, unsigned char g, unsigned char b) {
+                           unsigned char r, unsigned char g, unsigned char b) {
     RGBImage out = img;
-    for (auto& e : ellipses)
+    for (auto& e : ellipses) {
+        // Draw the ellipse perimeter using parametric equations
         for (int t = 0; t < 360; t++) {
-            float rad = t * PI / 180.0f;
+            float rad = t * 3.14159f / 180.0f;
             float ca = std::cos(e.angle), sa = std::sin(e.angle);
             float px = e.x + e.a * std::cos(rad) * ca - e.b * std::sin(rad) * sa;
             float py = e.y + e.a * std::cos(rad) * sa + e.b * std::sin(rad) * ca;
             int ix = (int)std::roundf(px), iy = (int)std::roundf(py);
-            if (ix >= 0 && ix < img.w && iy >= 0 && iy < img.h)
+            if (ix >= 0 && ix < img.w && iy >= 0 && iy < img.h) {
                 out.set(ix, iy, r, g, b);
+            }
         }
+    }
     return out;
 }

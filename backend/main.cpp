@@ -2,7 +2,8 @@
  * main.cpp — FromScratchCV HTTP Server
  * Enhanced with comprehensive shape detection parameters
  */
-
+#include <iostream>
+#include <ostream>
 #ifdef _WIN32
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0A00
@@ -249,6 +250,8 @@ int main() {
         int minArea = form_int(req, "min_area", 200);
         int maxArea = form_int(req, "max_area", 10000);
         float tolerance = form_float(req, "tolerance", 0.1f);
+        float inlierRatio = form_float(req, "inlier_ratio", 0.45f);
+        float minAspect = form_float(req, "min_aspect", 0.1f);
 
         std::cout << "[Ellipse Detection] Area: " << minArea << "-" << maxArea 
                   << ", Tolerance: " << tolerance << std::endl;
@@ -261,8 +264,8 @@ int main() {
         }
         Session& s = g_sessions[sid];
         GrayImage gray = to_gray(s.current);
-        GrayImage edges = canny(gray, 1.4f, 0.04f, 0.12f);
-        auto els = detect_ellipses(edges, minArea, maxArea);
+        GrayImage edges = canny(gray, 0.8f, 0.01f, 0.06f);
+        auto els = detect_ellipses(edges, minArea, maxArea, tolerance, inlierRatio, minAspect);
 
         RGBImage ov = overlay_ellipses(s.current, els, 0, 0, 255); // Blue for ellipses
         json je = json::array();

@@ -39,7 +39,10 @@ RGBImage overlay_circles(const RGBImage& img,
 // Ellipse Detection
 std::vector<EllipseData> detect_ellipses(const GrayImage& edges,
                                           int minArea = 200,
-                                          int maxArea = 50000);
+                                          int maxArea = 50000,
+                                         float tolerance = 0.1f,
+                                         float inlierRatio = 0.45f,
+                                         float minAspect = 0.1f);
 
 RGBImage overlay_ellipses(const RGBImage& img,
                           const std::vector<EllipseData>& ellipses,

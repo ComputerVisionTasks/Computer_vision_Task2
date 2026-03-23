@@ -64,7 +64,7 @@ function initializeAOS() {
 // Initialize event listeners
 function initializeEventListeners() {
     console.log('Initializing event listeners');
-    
+
     // Upload area
     const uploadArea = document.getElementById('uploadArea');
     const fileInput = document.getElementById('fileInput');
@@ -77,14 +77,14 @@ function initializeEventListeners() {
         uploadArea.addEventListener('drop', handleDrop);
         console.log('Upload area listeners attached');
     }
-    
+
     if (browseBtn) {
         browseBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             fileInput.click();
         });
     }
-    
+
     if (fileInput) {
         fileInput.addEventListener('change', handleFileSelect);
     }
@@ -93,7 +93,7 @@ function initializeEventListeners() {
     const undoBtn = document.getElementById('undoBtn');
     const resetBtn = document.getElementById('resetBtn');
     const saveBtn = document.getElementById('saveBtn');
-    
+
     if (undoBtn) undoBtn.addEventListener('click', undoOperation);
     if (resetBtn) resetBtn.addEventListener('click', resetImage);
     if (saveBtn) saveBtn.addEventListener('click', saveImage);
@@ -103,7 +103,7 @@ function initializeEventListeners() {
     const highThreshold = document.getElementById('highThreshold');
     const sigma = document.getElementById('sigma');
     const runCanny = document.getElementById('runCanny');
-    
+
     if (lowThreshold) lowThreshold.addEventListener('input', updateRangeDisplay);
     if (highThreshold) highThreshold.addEventListener('input', updateRangeDisplay);
     if (sigma) sigma.addEventListener('input', updateRangeDisplay);
@@ -113,7 +113,7 @@ function initializeEventListeners() {
     const lineThreshold = document.getElementById('lineThreshold');
     const ellipseTolerance = document.getElementById('ellipseTolerance');
     const detectShapesBtn = document.getElementById('detectShapes');
-    
+
     if (lineThreshold) lineThreshold.addEventListener('input', updateRangeDisplay);
     if (ellipseTolerance) ellipseTolerance.addEventListener('input', updateRangeDisplay);
     if (detectShapesBtn) detectShapesBtn.addEventListener('click', detectShapes);
@@ -125,7 +125,7 @@ function initializeEventListeners() {
     const gamma = document.getElementById('gamma');
     const initSnakeBtn = document.getElementById('initSnake');
     const runSnakeBtn = document.getElementById('runSnake');
-    
+
     if (alpha) alpha.addEventListener('input', updateRangeDisplay);
     if (beta) beta.addEventListener('input', updateRangeDisplay);
     if (iterations) iterations.addEventListener('input', updateRangeDisplay);
@@ -135,7 +135,7 @@ function initializeEventListeners() {
 
     // Analysis
     const analyzeContourBtn = document.getElementById('analyzeContour');
-    
+
     if (analyzeContourBtn) analyzeContourBtn.addEventListener('click', analyzeContour);
 
     // Original image click for snake points
@@ -150,7 +150,7 @@ function initializeEventListeners() {
 // Initialize shape detection controls
 function initShapeDetection() {
     console.log('Initializing shape detection controls');
-    
+
     // Shape type toggles
     const shapeInputs = ['detectLines', 'detectCircles', 'detectEllipses'];
     shapeInputs.forEach(id => {
@@ -177,7 +177,7 @@ function initShapeDetection() {
         if (input) {
             input.addEventListener('input', updateRangeDisplay);
             input.addEventListener('change', () => updateShapeParams('circles'));
-            
+
             // Special handling for radius relationship
             if (id === 'minRadius' || id === 'maxRadius') {
                 input.addEventListener('change', validateRadiusRange);
@@ -192,7 +192,7 @@ function initShapeDetection() {
         if (input) {
             input.addEventListener('input', updateRangeDisplay);
             input.addEventListener('change', () => updateShapeParams('ellipses'));
-            
+
             // Special handling for area relationship
             if (id === 'minArea' || id === 'maxArea') {
                 input.addEventListener('change', validateAreaRange);
@@ -204,7 +204,7 @@ function initShapeDetection() {
     const presetDefault = document.getElementById('presetDefault');
     const presetPrecise = document.getElementById('presetPrecise');
     const presetFast = document.getElementById('presetFast');
-    
+
     if (presetDefault) presetDefault.addEventListener('click', () => loadShapePreset('default'));
     if (presetPrecise) presetPrecise.addEventListener('click', () => loadShapePreset('precise'));
     if (presetFast) presetFast.addEventListener('click', () => loadShapePreset('fast'));
@@ -212,7 +212,7 @@ function initShapeDetection() {
     // Export buttons
     const exportParamsBtn = document.getElementById('exportShapeParams');
     const copyResultsBtn = document.getElementById('copyShapeResults');
-    
+
     if (exportParamsBtn) exportParamsBtn.addEventListener('click', exportShapeParameters);
     if (copyResultsBtn) copyResultsBtn.addEventListener('click', copyShapeResults);
 
@@ -262,11 +262,11 @@ function updateShapePanels() {
 function validateRadiusRange() {
     const minInput = document.getElementById('minRadius');
     const maxInput = document.getElementById('maxRadius');
-    
+
     if (minInput && maxInput) {
         let min = parseInt(minInput.value);
         let max = parseInt(maxInput.value);
-        
+
         if (min >= max) {
             maxInput.value = min + 10;
             updateRangeDisplay({ target: maxInput });
@@ -279,11 +279,11 @@ function validateRadiusRange() {
 function validateAreaRange() {
     const minInput = document.getElementById('minArea');
     const maxInput = document.getElementById('maxArea');
-    
+
     if (minInput && maxInput) {
         let min = parseInt(minInput.value);
         let max = parseInt(maxInput.value);
-        
+
         if (min >= max) {
             maxInput.value = min * 2;
             updateRangeDisplay({ target: maxInput });
@@ -294,57 +294,57 @@ function validateAreaRange() {
 
 // Load shape detection preset
 function loadShapePreset(preset) {
-    switch(preset) {
+    switch (preset) {
         case 'default':
             // Default balanced settings
             if (document.getElementById('lineThreshold')) document.getElementById('lineThreshold').value = 50;
             if (document.getElementById('thetaRes')) document.getElementById('thetaRes').value = 1.0;
             if (document.getElementById('rhoRes')) document.getElementById('rhoRes').value = 1.0;
-            
+
             if (document.getElementById('minRadius')) document.getElementById('minRadius').value = 10;
             if (document.getElementById('maxRadius')) document.getElementById('maxRadius').value = 100;
             if (document.getElementById('circleThreshold')) document.getElementById('circleThreshold').value = 0.55;
             if (document.getElementById('minVotes')) document.getElementById('minVotes').value = 20;
             if (document.getElementById('centerDist')) document.getElementById('centerDist').value = 0.3;
-            
+
             if (document.getElementById('minArea')) document.getElementById('minArea').value = 200;
             if (document.getElementById('maxArea')) document.getElementById('maxArea').value = 10000;
             if (document.getElementById('ellipseTolerance')) document.getElementById('ellipseTolerance').value = 0.1;
             if (document.getElementById('minAspect')) document.getElementById('minAspect').value = 0.1;
             if (document.getElementById('inlierRatio')) document.getElementById('inlierRatio').value = 0.45;
             break;
-            
+
         case 'precise':
             // More accurate but slower settings
             if (document.getElementById('lineThreshold')) document.getElementById('lineThreshold').value = 30;
             if (document.getElementById('thetaRes')) document.getElementById('thetaRes').value = 0.5;
             if (document.getElementById('rhoRes')) document.getElementById('rhoRes').value = 0.5;
-            
+
             if (document.getElementById('minRadius')) document.getElementById('minRadius').value = 5;
             if (document.getElementById('maxRadius')) document.getElementById('maxRadius').value = 150;
             if (document.getElementById('circleThreshold')) document.getElementById('circleThreshold').value = 0.7;
             if (document.getElementById('minVotes')) document.getElementById('minVotes').value = 15;
             if (document.getElementById('centerDist')) document.getElementById('centerDist').value = 0.2;
-            
+
             if (document.getElementById('minArea')) document.getElementById('minArea').value = 100;
             if (document.getElementById('maxArea')) document.getElementById('maxArea').value = 20000;
             if (document.getElementById('ellipseTolerance')) document.getElementById('ellipseTolerance').value = 0.05;
             if (document.getElementById('minAspect')) document.getElementById('minAspect').value = 0.15;
             if (document.getElementById('inlierRatio')) document.getElementById('inlierRatio').value = 0.6;
             break;
-            
+
         case 'fast':
             // Faster but less accurate settings
             if (document.getElementById('lineThreshold')) document.getElementById('lineThreshold').value = 80;
             if (document.getElementById('thetaRes')) document.getElementById('thetaRes').value = 2.0;
             if (document.getElementById('rhoRes')) document.getElementById('rhoRes').value = 2.0;
-            
+
             if (document.getElementById('minRadius')) document.getElementById('minRadius').value = 15;
             if (document.getElementById('maxRadius')) document.getElementById('maxRadius').value = 80;
             if (document.getElementById('circleThreshold')) document.getElementById('circleThreshold').value = 0.4;
             if (document.getElementById('minVotes')) document.getElementById('minVotes').value = 30;
             if (document.getElementById('centerDist')) document.getElementById('centerDist').value = 0.5;
-            
+
             if (document.getElementById('minArea')) document.getElementById('minArea').value = 500;
             if (document.getElementById('maxArea')) document.getElementById('maxArea').value = 5000;
             if (document.getElementById('ellipseTolerance')) document.getElementById('ellipseTolerance').value = 0.2;
@@ -352,19 +352,19 @@ function loadShapePreset(preset) {
             if (document.getElementById('inlierRatio')) document.getElementById('inlierRatio').value = 0.3;
             break;
     }
-    
+
     // Update all displays
     document.querySelectorAll('input[type=range]').forEach(input => {
         updateRangeDisplay({ target: input });
     });
-    
+
     showToast(`Loaded ${preset} preset`, 'success');
 }
 
 // Update shape parameters (can be used for real-time preview)
 function updateShapeParams(shapeType) {
     if (!currentState.originalImage) return;
-    
+
     // Could implement real-time parameter preview here
     // For now, just log the changes
     console.log(`Shape params updated for ${shapeType}`);
@@ -380,12 +380,12 @@ function disableAllOperationButtons(disabled) {
         'runSnake',
         'analyzeContour'
     ];
-    
+
     operationButtons.forEach(id => {
         const btn = document.getElementById(id);
         if (btn) btn.disabled = disabled;
     });
-    
+
     // Action buttons
     const actionButtons = ['undoBtn', 'resetBtn', 'saveBtn'];
     actionButtons.forEach(id => {
@@ -422,7 +422,7 @@ function handleDrop(e) {
     if (uploadArea) {
         uploadArea.classList.remove('dragover');
     }
-    
+
     const files = e.dataTransfer.files;
     if (files.length > 0) {
         handleFile(files[0]);
@@ -453,7 +453,7 @@ async function handleFile(file) {
 
     try {
         console.log('Uploading file:', file.name);
-        
+
         const response = await fetch(`${API_BASE_URL}/upload`, {
             method: 'POST',
             body: formData
@@ -484,13 +484,13 @@ async function handleFile(file) {
         const processedPreview = document.getElementById('processedPreview');
         const originalPlaceholder = document.getElementById('originalPlaceholder');
         const processedPlaceholder = document.getElementById('processedPlaceholder');
-        
+
         if (originalPreview && originalPlaceholder) {
             originalPreview.src = data.original;
             originalPreview.style.display = 'block';
             originalPlaceholder.style.display = 'none';
         }
-        
+
         if (processedPreview && processedPlaceholder) {
             processedPreview.src = data.processed;
             processedPreview.style.display = 'block';
@@ -499,11 +499,11 @@ async function handleFile(file) {
 
         // Update shape counts display
         updateShapeResultsUI();
-        
+
         // Hide shape summary until new detection
         const shapeSummary = document.getElementById('shapeSummary');
         if (shapeSummary) shapeSummary.style.display = 'none';
-        
+
         const permanentResults = document.getElementById('permanentShapeResults');
         if (permanentResults) permanentResults.style.display = 'none';
 
@@ -523,7 +523,7 @@ async function handleFile(file) {
 function updateRangeDisplay(e) {
     const id = e.target.id;
     let value = parseFloat(e.target.value);
-    
+
     // Format value appropriately
     let displayValue;
     if (id === 'iterations') {
@@ -533,7 +533,7 @@ function updateRangeDisplay(e) {
     } else {
         displayValue = value.toFixed(2);
     }
-    
+
     // Look for badge format
     let display = document.getElementById(id + 'ValueBadge');
     if (!display) {
@@ -542,10 +542,10 @@ function updateRangeDisplay(e) {
     if (!display) {
         display = document.getElementById(id + 'Value');
     }
-    
+
     if (display) {
         display.textContent = displayValue;
-        
+
         // Add unit if applicable
         if (id === 'thetaRes') {
             display.textContent = displayValue + '°';
@@ -591,7 +591,7 @@ async function runCannyEdge() {
         // Update processed image
         const showOverlay = document.getElementById('showEdgeOverlay').checked;
         currentState.processedImage = showOverlay && data.overlay ? data.overlay : data.processed;
-        
+
         const processedPreview = document.getElementById('processedPreview');
         if (processedPreview) {
             processedPreview.src = currentState.processedImage;
@@ -692,7 +692,7 @@ async function detectShapes() {
                     data: lineData.lines || []
                 };
                 shapesDetected = true;
-                
+
                 // Draw lines in RED
                 ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
                 ctx.lineWidth = 2;
@@ -701,7 +701,7 @@ async function detectShapes() {
                     const r = l[0], t = l[1];
                     const ca = Math.cos(t), sa = Math.sin(t);
                     const x0 = ca * r, y0 = sa * r;
-                    
+
                     ctx.beginPath();
                     ctx.moveTo(x0 - sa * span, y0 + ca * span);
                     ctx.lineTo(x0 + sa * span, y0 - ca * span);
@@ -739,7 +739,7 @@ async function detectShapes() {
                     ctx.beginPath();
                     ctx.arc(c[0], c[1], c[2], 0, 2 * Math.PI);
                     ctx.stroke();
-                    
+
                     // Draw center point
                     ctx.fillStyle = 'rgba(0, 255, 0, 0.5)';
                     ctx.beginPath();
@@ -756,6 +756,8 @@ async function detectShapes() {
             ellipseFormData.append('min_area', params.ellipses.min_area);
             ellipseFormData.append('max_area', params.ellipses.max_area);
             ellipseFormData.append('tolerance', params.ellipses.tolerance);
+            ellipseFormData.append('inlier_ratio', params.ellipses.inlier_ratio);
+            ellipseFormData.append('min_aspect', params.ellipses.min_aspect);
 
             const ellipseResponse = await fetch(`${API_BASE_URL}/detect-ellipses`, {
                 method: 'POST',
@@ -777,7 +779,7 @@ async function detectShapes() {
                     ctx.beginPath();
                     ctx.ellipse(e.x, e.y, e.a, e.b, e.angle, 0, 2 * Math.PI);
                     ctx.stroke();
-                    
+
                     // Draw center point
                     ctx.fillStyle = 'rgba(0, 0, 255, 0.5)';
                     ctx.beginPath();
@@ -809,7 +811,7 @@ async function detectShapes() {
         if (currentState.shapeDetection.lines.count > 0) parts.push(`${currentState.shapeDetection.lines.count} lines`);
         if (currentState.shapeDetection.circles.count > 0) parts.push(`${currentState.shapeDetection.circles.count} circles`);
         if (currentState.shapeDetection.ellipses.count > 0) parts.push(`${currentState.shapeDetection.ellipses.count} ellipses`);
-        
+
         const message = parts.length > 0 ? `Detected: ${parts.join(', ')}` : 'No shapes detected';
         showToast(message, 'success');
 
@@ -827,16 +829,16 @@ function updateShapeResultsUI() {
     const linesCount = document.getElementById('linesCount');
     const circlesCount = document.getElementById('circlesCount');
     const ellipsesCount = document.getElementById('ellipsesCount');
-    
+
     if (linesCount) linesCount.textContent = currentState.shapeDetection.lines.count;
     if (circlesCount) circlesCount.textContent = currentState.shapeDetection.circles.count;
     if (ellipsesCount) ellipsesCount.textContent = currentState.shapeDetection.ellipses.count;
-    
+
     // Update preview badges
     const linesPreview = document.getElementById('linesPreview');
     const circlesPreview = document.getElementById('circlesPreview');
     const ellipsesPreview = document.getElementById('ellipsesPreview');
-    
+
     if (linesPreview) linesPreview.textContent = `${currentState.shapeDetection.lines.count} detected`;
     if (circlesPreview) circlesPreview.textContent = `${currentState.shapeDetection.circles.count} detected`;
     if (ellipsesPreview) ellipsesPreview.textContent = `${currentState.shapeDetection.ellipses.count} detected`;
@@ -846,11 +848,11 @@ function updateShapeResultsUI() {
 function showShapeParameters(params) {
     const summary = document.getElementById('shapeSummary');
     const content = document.getElementById('shapeSummaryContent');
-    
+
     if (!summary || !content) return;
-    
+
     let html = '<div class="row g-2">';
-    
+
     if (document.getElementById('detectLines').checked) {
         html += `
             <div class="col-12">
@@ -865,7 +867,7 @@ function showShapeParameters(params) {
             </div>
         `;
     }
-    
+
     if (document.getElementById('detectCircles').checked) {
         html += `
             <div class="col-12">
@@ -880,7 +882,7 @@ function showShapeParameters(params) {
             </div>
         `;
     }
-    
+
     if (document.getElementById('detectEllipses').checked) {
         html += `
             <div class="col-12">
@@ -894,9 +896,9 @@ function showShapeParameters(params) {
             </div>
         `;
     }
-    
+
     html += '</div>';
-    
+
     content.innerHTML = html;
     summary.style.display = 'block';
 }
@@ -906,21 +908,21 @@ function displayShapeResults() {
     const permanentResults = document.getElementById('permanentShapeResults');
     const permanentCounts = document.getElementById('permanentShapeCounts');
     const shapeDetails = document.getElementById('shapeDetails');
-    
+
     if (!permanentResults || !permanentCounts) return;
-    
+
     let countsHtml = '';
     let detailsHtml = '';
-    
+
     if (currentState.shapeDetection.lines.count > 0) {
         countsHtml += `<span class="badge shape-badge shape-badge-lines me-1 mb-1">${currentState.shapeDetection.lines.count} Lines</span>`;
-        
+
         // Show first few lines parameters
         if (currentState.shapeDetection.lines.data.length > 0) {
             detailsHtml += '<div class="lines-details mt-2"><strong>Lines:</strong><br>';
             currentState.shapeDetection.lines.data.slice(0, 3).forEach((line, i) => {
                 const angle = (line[1] * 180 / Math.PI).toFixed(1);
-                detailsHtml += `<small>Line ${i+1}: ρ=${line[0].toFixed(1)}, θ=${angle}°</small><br>`;
+                detailsHtml += `<small>Line ${i + 1}: ρ=${line[0].toFixed(1)}, θ=${angle}°</small><br>`;
             });
             if (currentState.shapeDetection.lines.data.length > 3) {
                 detailsHtml += `<small>... and ${currentState.shapeDetection.lines.data.length - 3} more</small>`;
@@ -928,14 +930,14 @@ function displayShapeResults() {
             detailsHtml += '</div>';
         }
     }
-    
+
     if (currentState.shapeDetection.circles.count > 0) {
         countsHtml += `<span class="badge shape-badge shape-badge-circles me-1 mb-1">${currentState.shapeDetection.circles.count} Circles</span>`;
-        
+
         if (currentState.shapeDetection.circles.data.length > 0) {
             detailsHtml += '<div class="circles-details mt-2"><strong>Circles:</strong><br>';
             currentState.shapeDetection.circles.data.slice(0, 3).forEach((circle, i) => {
-                detailsHtml += `<small>Circle ${i+1}: (${circle[0]},${circle[1]}) r=${circle[2]}</small><br>`;
+                detailsHtml += `<small>Circle ${i + 1}: (${circle[0]},${circle[1]}) r=${circle[2]}</small><br>`;
             });
             if (currentState.shapeDetection.circles.data.length > 3) {
                 detailsHtml += `<small>... and ${currentState.shapeDetection.circles.data.length - 3} more</small>`;
@@ -943,15 +945,15 @@ function displayShapeResults() {
             detailsHtml += '</div>';
         }
     }
-    
+
     if (currentState.shapeDetection.ellipses.count > 0) {
         countsHtml += `<span class="badge shape-badge shape-badge-ellipses me-1 mb-1">${currentState.shapeDetection.ellipses.count} Ellipses</span>`;
-        
+
         if (currentState.shapeDetection.ellipses.data.length > 0) {
             detailsHtml += '<div class="ellipses-details mt-2"><strong>Ellipses:</strong><br>';
             currentState.shapeDetection.ellipses.data.slice(0, 3).forEach((ellipse, i) => {
                 const angle = (ellipse.angle * 180 / Math.PI).toFixed(1);
-                detailsHtml += `<small>Ellipse ${i+1}: a=${ellipse.a.toFixed(1)}, b=${ellipse.b.toFixed(1)}, angle=${angle}°</small><br>`;
+                detailsHtml += `<small>Ellipse ${i + 1}: a=${ellipse.a.toFixed(1)}, b=${ellipse.b.toFixed(1)}, angle=${angle}°</small><br>`;
             });
             if (currentState.shapeDetection.ellipses.data.length > 3) {
                 detailsHtml += `<small>... and ${currentState.shapeDetection.ellipses.data.length - 3} more</small>`;
@@ -959,12 +961,12 @@ function displayShapeResults() {
             detailsHtml += '</div>';
         }
     }
-    
+
     if (countsHtml) {
         permanentCounts.innerHTML = countsHtml;
         if (shapeDetails) shapeDetails.innerHTML = detailsHtml;
         permanentResults.style.display = 'block';
-        
+
         // Enable export buttons
         const exportParamsBtn = document.getElementById('exportShapeParams');
         const copyResultsBtn = document.getElementById('copyShapeResults');
@@ -974,7 +976,7 @@ function displayShapeResults() {
         permanentCounts.innerHTML = '<span class="text-muted">No shapes detected. Try adjusting parameters.</span>';
         if (shapeDetails) shapeDetails.innerHTML = '';
         permanentResults.style.display = 'block';
-        
+
         // Disable export buttons
         const exportParamsBtn = document.getElementById('exportShapeParams');
         const copyResultsBtn = document.getElementById('copyShapeResults');
@@ -1007,7 +1009,7 @@ function exportShapeParameters() {
             height: document.getElementById('originalPreview')?.naturalHeight
         }
     };
-    
+
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1015,7 +1017,7 @@ function exportShapeParameters() {
     a.download = `shape_detection_${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    
+
     showToast('Shape parameters exported', 'success');
 }
 
@@ -1024,42 +1026,42 @@ function copyShapeResults() {
     const lines = currentState.shapeDetection.lines.count;
     const circles = currentState.shapeDetection.circles.count;
     const ellipses = currentState.shapeDetection.ellipses.count;
-    
+
     let text = `Shape Detection Results - ${new Date().toLocaleString()}\n`;
     text += `${'='.repeat(50)}\n\n`;
     text += `Lines: ${lines}\n`;
     text += `Circles: ${circles}\n`;
     text += `Ellipses: ${ellipses}\n\n`;
-    
+
     if (lines > 0) {
         text += `Line Details:\n`;
         text += `${'-'.repeat(30)}\n`;
         currentState.shapeDetection.lines.data.forEach((line, i) => {
             const angle = (line[1] * 180 / Math.PI).toFixed(1);
-            text += `  Line ${i+1}: ρ=${line[0].toFixed(1)}, θ=${angle}°\n`;
+            text += `  Line ${i + 1}: ρ=${line[0].toFixed(1)}, θ=${angle}°\n`;
         });
         text += `\n`;
     }
-    
+
     if (circles > 0) {
         text += `Circle Details:\n`;
         text += `${'-'.repeat(30)}\n`;
         currentState.shapeDetection.circles.data.forEach((circle, i) => {
-            text += `  Circle ${i+1}: center=(${circle[0]},${circle[1]}), radius=${circle[2]}\n`;
+            text += `  Circle ${i + 1}: center=(${circle[0]},${circle[1]}), radius=${circle[2]}\n`;
         });
         text += `\n`;
     }
-    
+
     if (ellipses > 0) {
         text += `Ellipse Details:\n`;
         text += `${'-'.repeat(30)}\n`;
         currentState.shapeDetection.ellipses.data.forEach((ellipse, i) => {
             const angle = (ellipse.angle * 180 / Math.PI).toFixed(1);
-            text += `  Ellipse ${i+1}: center=(${ellipse.x.toFixed(1)},${ellipse.y.toFixed(1)}), ` +
-                   `a=${ellipse.a.toFixed(1)}, b=${ellipse.b.toFixed(1)}, angle=${angle}°\n`;
+            text += `  Ellipse ${i + 1}: center=(${ellipse.x.toFixed(1)},${ellipse.y.toFixed(1)}), ` +
+                `a=${ellipse.a.toFixed(1)}, b=${ellipse.b.toFixed(1)}, angle=${angle}°\n`;
         });
     }
-    
+
     navigator.clipboard.writeText(text).then(() => {
         showToast('Results copied to clipboard', 'success');
     }).catch(() => {
@@ -1076,11 +1078,11 @@ function handleImageClick(e) {
 
     const img = e.target;
     const rect = img.getBoundingClientRect();
-    
+
     // Calculate click coordinates relative to image
     const scaleX = img.naturalWidth / rect.width;
     const scaleY = img.naturalHeight / rect.height;
-    
+
     const x = Math.round((e.clientX - rect.left) * scaleX);
     const y = Math.round((e.clientY - rect.top) * scaleY);
 
@@ -1107,19 +1109,19 @@ function drawContourPoints() {
     if (!currentState.originalImage || currentState.contourPoints.length === 0) return;
 
     const img = new Image();
-    img.onload = function() {
+    img.onload = function () {
         const canvas = document.createElement('canvas');
         canvas.width = img.width;
         canvas.height = img.height;
         const ctx = canvas.getContext('2d');
-        
+
         ctx.drawImage(img, 0, 0);
-        
+
         // Draw points
         ctx.fillStyle = '#00ff00';
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 2;
-        
+
         currentState.contourPoints.forEach(point => {
             ctx.beginPath();
             ctx.arc(point[0], point[1], 5, 0, 2 * Math.PI);
@@ -1171,7 +1173,7 @@ async function initializeSnake() {
 
     try {
         console.log('Initializing snake with', currentState.contourPoints.length, 'points');
-        
+
         const response = await fetch(`${API_BASE_URL}/snake/init`, {
             method: 'POST',
             body: formData
@@ -1184,14 +1186,14 @@ async function initializeSnake() {
 
         const data = await response.json();
         console.log('Snake init response:', data);
-        
+
         currentState.snakeInitialized = true;
-        
+
         const originalPreview = document.getElementById('originalPreview');
         if (originalPreview && data.overlay) {
             originalPreview.src = data.overlay;
         }
-        
+
         showToast('Snake initialized', 'success');
     } catch (error) {
         console.error('Snake init error:', error);
@@ -1216,7 +1218,7 @@ async function runSnakeEvolution() {
 
     try {
         console.log('Running snake evolution...');
-        
+
         const response = await fetch(`${API_BASE_URL}/snake/evolve`, {
             method: 'POST',
             body: formData
@@ -1229,14 +1231,14 @@ async function runSnakeEvolution() {
 
         const data = await response.json();
         console.log('Snake evolution response:', data);
-        
+
         const processedPreview = document.getElementById('processedPreview');
         if (processedPreview) {
             processedPreview.src = data.overlay;
         }
-        
+
         currentState.contourPoints = data.contour;
-        
+
         showToast(`Snake evolved (${data.iterations} iterations)`, 'success');
     } catch (error) {
         console.error('Snake evolution error:', error);
@@ -1260,7 +1262,7 @@ async function analyzeContour() {
 
     try {
         console.log('Analyzing contour...');
-        
+
         const response = await fetch(`${API_BASE_URL}/analyze-contour`, {
             method: 'POST',
             body: formData
@@ -1273,7 +1275,7 @@ async function analyzeContour() {
 
         const data = await response.json();
         console.log('Analysis response:', data);
-        
+
         const analysis = data.analysis;
 
         // Update UI with metrics
@@ -1282,12 +1284,12 @@ async function analyzeContour() {
         const numPointsValue = document.getElementById('numPointsValue');
         const closedValue = document.getElementById('closedValue');
         const chainCodeBox = document.getElementById('chainCodeBox');
-        
+
         if (perimeterValue) perimeterValue.textContent = analysis.perimeter.toFixed(2);
         if (areaValue) areaValue.textContent = analysis.area.toFixed(2);
         if (numPointsValue) numPointsValue.textContent = analysis.num_points;
         if (closedValue) closedValue.textContent = analysis.is_closed ? 'Yes' : 'No';
-        
+
         if (chainCodeBox) {
             let chainCodeText = '';
             if (Array.isArray(analysis.chain_code)) {
@@ -1344,7 +1346,7 @@ async function undoOperation() {
         showToast('Please upload an image first', 'error');
         return;
     }
-    
+
     if (currentState.history.length === 0) {
         showToast('Nothing to undo', 'error');
         return;
@@ -1371,13 +1373,13 @@ async function undoOperation() {
 
         currentState.originalImage = data.original;
         currentState.processedImage = data.processed;
-        
+
         const originalPreview = document.getElementById('originalPreview');
         const processedPreview = document.getElementById('processedPreview');
-        
+
         if (originalPreview) originalPreview.src = data.original;
         if (processedPreview) processedPreview.src = data.processed;
-        
+
         currentState.history.pop();
 
         showToast('Undo successful', 'success');
@@ -1420,7 +1422,7 @@ async function resetImage() {
         currentState.contourPoints = [];
         currentState.snakeInitialized = false;
         currentState.history = [];
-        
+
         // Reset shape detection state
         currentState.shapeDetection = {
             lines: { count: 0, data: [] },
@@ -1428,10 +1430,10 @@ async function resetImage() {
             ellipses: { count: 0, data: [] },
             lastParams: null
         };
-        
+
         const originalPreview = document.getElementById('originalPreview');
         const processedPreview = document.getElementById('processedPreview');
-        
+
         if (originalPreview) originalPreview.src = data.original;
         if (processedPreview) processedPreview.src = data.processed;
 
@@ -1440,14 +1442,14 @@ async function resetImage() {
         if (pointCount) {
             pointCount.textContent = '0 points';
         }
-        
+
         // Hide shape results
         const shapeSummary = document.getElementById('shapeSummary');
         if (shapeSummary) shapeSummary.style.display = 'none';
-        
+
         const permanentResults = document.getElementById('permanentShapeResults');
         if (permanentResults) permanentResults.style.display = 'none';
-        
+
         // Reset shape counts in UI
         updateShapeResultsUI();
 
@@ -1506,13 +1508,13 @@ async function saveImage() {
 function showLoading(message = 'Loading...') {
     // Remove existing overlay if any
     hideLoading();
-    
+
     // Check if we can show this inside the permanent Shape Results box
     const permanentCounts = document.getElementById('permanentShapeCounts');
     const permanentResults = document.getElementById('permanentShapeResults');
-    const shapeTabActive = document.getElementById('shape-tab') && 
-                          document.getElementById('shape-tab').classList.contains('active');
-    
+    const shapeTabActive = document.getElementById('shape-tab') &&
+        document.getElementById('shape-tab').classList.contains('active');
+
     if (shapeTabActive && permanentCounts && permanentResults) {
         permanentResults.style.display = 'block';
         permanentCounts.innerHTML = `
@@ -1527,7 +1529,7 @@ function showLoading(message = 'Loading...') {
         permanentCounts.dataset.isLoading = "true";
         return;
     }
-    
+
     const overlay = document.createElement('div');
     overlay.className = 'spinner-overlay';
     overlay.id = 'loadingOverlay';
@@ -1567,9 +1569,9 @@ function showToast(message, type = 'info') {
 
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    
+
     let title = '';
-    switch(type) {
+    switch (type) {
         case 'success':
             title = 'Success';
             break;
@@ -1582,12 +1584,12 @@ function showToast(message, type = 'info') {
         default:
             title = 'Info';
     }
-    
+
     toast.innerHTML = `
         <div class="toast-title">${title}</div>
         <div class="toast-message">${message}</div>
     `;
-    
+
     toastContainer.appendChild(toast);
 
     // Auto remove after 3 seconds
