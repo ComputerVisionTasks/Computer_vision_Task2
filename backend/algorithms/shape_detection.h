@@ -28,7 +28,8 @@ std::vector<Circle> hough_circles(const GrayImage& edges,
                                   int   rMin        = 10,
                                   int   rMax        = 100,
                                   float threshold   = 0.55f,
-                                  int   minAbsVotes = 20);
+                                  int   minAbsVotes = 20,
+                                  float centerDist  = 0.3f);
 
 RGBImage overlay_circles(const RGBImage& img,
                          const std::vector<Circle>& circles,

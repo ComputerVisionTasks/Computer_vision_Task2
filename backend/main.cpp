@@ -67,6 +67,20 @@ int form_int(const httplib::Request& req, const std::string& key, int def = 0) {
     }
 }
 
+bool form_bool(const httplib::Request& req, const std::string& key, bool def = false) {
+    std::string val = form_val(req, key, "");
+    if (val.empty()) return def;
+    if (val == "1" || val == "true" || val == "TRUE" || val == "True" ||
+        val == "yes" || val == "YES" || val == "on" || val == "ON") {
+        return true;
+    }
+    if (val == "0" || val == "false" || val == "FALSE" || val == "False" ||
+        val == "no" || val == "NO" || val == "off" || val == "OFF") {
+        return false;
+    }
+    return def;
+}
+
 // ========== Main ==========
 
 int main() {
@@ -214,10 +228,12 @@ int main() {
         int rMax = form_int(req, "radius_max", 100);
         float thr = form_float(req, "threshold", 0.55f);
         int minAbsVotes = form_int(req, "min_abs_votes", 20);
+        float centerDist = form_float(req, "center_dist", 0.3f);
 
-        std::cout << "[Hough Circles] Radius: " << rMin << "-" << rMax 
-                  << ", Threshold: " << thr 
-                  << ", Min Votes: " << minAbsVotes << std::endl;
+        std::cout << "[Hough Circles] Radius: " << rMin << "-" << rMax
+                  << ", Threshold: " << thr
+                  << ", Min Votes: " << minAbsVotes
+                  << ", Center Dist: " << centerDist << std::endl;
 
         std::lock_guard<std::mutex> lk(g_mutex);
         if (g_sessions.find(sid) == g_sessions.end()) {
@@ -228,7 +244,7 @@ int main() {
         Session& s = g_sessions[sid];
         GrayImage gray = to_gray(s.current);
         GrayImage edges = canny(gray, 1.4f, 0.04f, 0.12f);
-        auto circles = hough_circles(edges, rMin, rMax, thr, minAbsVotes);
+        auto circles = hough_circles(edges, rMin, rMax, thr, minAbsVotes, centerDist);
 
         RGBImage ov = overlay_circles(s.current, circles, 0, 255, 0); // Green for circles
         json jc = json::array();
@@ -335,8 +351,15 @@ int main() {
     svr.Post("/snake/evolve", [](const httplib::Request& req, httplib::Response& res) {
         auto sid = req.form.get_field("session_id");
         int iterations = form_int(req, "iterations", 100);
+        bool restart = form_bool(req, "restart", false);
+        float alpha = form_float(req, "alpha", NAN);
+        float beta  = form_float(req, "beta", NAN);
+        float gamma = form_float(req, "gamma", NAN);
         
-        std::cout << "[Snake Evolve] Session: " << sid << ", Iterations: " << iterations << std::endl;
+        std::cout << "[Snake Evolve] Session: " << sid
+                  << ", Iterations: " << iterations
+                  << ", Restart: " << (restart ? "true" : "false")
+                  << std::endl;
         
         std::lock_guard<std::mutex> lk(g_mutex);
         if (g_sessions.find(sid) == g_sessions.end()) {
@@ -350,6 +373,12 @@ int main() {
             res.set_content(json{{"error","snake not initialized"}}.dump(), "application/json");
             return;
         }
+
+        if (!std::isnan(alpha)) s.snake.alpha = alpha;
+        if (!std::isnan(beta))  s.snake.beta  = beta;
+        if (!std::isnan(gamma)) s.snake.gamma = gamma;
+        if (restart) s.snake.reset();
+
         auto history = s.snake.evolve(iterations);
         auto& contour = s.snake.points;
 
@@ -365,6 +394,12 @@ int main() {
         j["contour"] = jc;
         j["overlay"] = b64;
         j["iterations"] = (int)history.size();
+        j["params"] = {
+            {"alpha", s.snake.alpha},
+            {"beta", s.snake.beta},
+            {"gamma", s.snake.gamma},
+            {"restart", restart}
+        };
         res.set_content(j.dump(), "application/json");
     });
 
