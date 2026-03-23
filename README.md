@@ -163,7 +163,7 @@ Standard Hough Circle Transform with crucial improvements over a naïve implemen
 | **3×3 NMS** | Per-cell local maximum check before accepting a center |
 | **Duplicate merge** | Centers within `min(r1, r2)` pixels and radii within 30% are merged |
 
-**Parameters:** `radius_min`, `radius_max`, `threshold` (default 0.55), `min_abs_votes` (hard floor)
+**Parameters:** `radius_min`, `radius_max`, `threshold` (default 0.55), `min_abs_votes` (hard floor), `center_dist` (duplicate merge distance)
 
 <p align="center">
   <img src="UI_output/Circle.png" alt="Hough Circles Detection" width="70%"/>
