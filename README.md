@@ -2,8 +2,6 @@
   <img src="Frontend/assets/img/Logo-Cvg2.png" alt="FromScratchCV Logo" width="220"/>
 </p>
 
-<h1 align="center">FromScratchCV</h1>
-
 <p align="center">
   <b>Computer Vision Algorithms — Built from Scratch in C++</b><br/>
   No OpenCV. No scikit-image. Pure mathematics.
@@ -173,10 +171,10 @@ Standard Hough Circle Transform with crucial improvements over a naïve implemen
 ---
 
 #### Ellipse Detection
-
-> **Work in Progress** — This section will be completed once the ellipse detection algorithm is finalized.
-
-*Ellipse detection results and documentation will be added here.*
+<p align="center">
+  <img src="UI_output/Ellipse.png" alt="Hough Ellipse Detection" width="70%"/>
+</p>
+<p align="center"><i>detected Ellipse overlaid in green</i></p>
 
 ---
 
