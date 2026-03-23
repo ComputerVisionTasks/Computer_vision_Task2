@@ -639,7 +639,8 @@ async function detectShapes() {
                 radius_min: document.getElementById('minRadius')?.value || '10',
                 radius_max: document.getElementById('maxRadius')?.value || '100',
                 threshold: document.getElementById('circleThreshold')?.value || '0.55',
-                min_votes: document.getElementById('minVotes')?.value || '20'
+                min_votes: document.getElementById('minVotes')?.value || '20',
+                center_dist: document.getElementById('centerDist')?.value || '0.3'
             },
             ellipses: {
                 min_area: document.getElementById('minArea')?.value || '200',
@@ -718,6 +719,7 @@ async function detectShapes() {
             circleFormData.append('radius_max', params.circles.radius_max);
             circleFormData.append('threshold', params.circles.threshold);
             circleFormData.append('min_abs_votes', params.circles.min_votes);
+            circleFormData.append('center_dist', params.circles.center_dist);
 
             const circleResponse = await fetch(`${API_BASE_URL}/hough-circles`, {
                 method: 'POST',

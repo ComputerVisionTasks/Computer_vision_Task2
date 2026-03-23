@@ -125,7 +125,8 @@ RGBImage overlay_lines(const RGBImage& img, const std::vector<HoughLine>& lines,
 
 std::vector<Circle> hough_circles(const GrayImage& edges, int rMin, int rMax,
                                   float threshold,
-                                  int minAbsVotes) {
+                                  int minAbsVotes,
+                                  float centerDist) {
     int h = edges.h, w = edges.w;
 
     // Precompute edge points — exclude a 2px border to avoid image-boundary
@@ -206,8 +207,11 @@ std::vector<Circle> hough_circles(const GrayImage& edges, int rMin, int rMax,
         bool dup = false;
         for (auto& u : unique) {
             float dist = std::hypot((float)(c.x - u.x), (float)(c.y - u.y));
-            // Merge if centers within min(r1,r2) distance and radii within 30%
-            if (dist < (float)std::min(c.r, u.r) && std::abs(c.r - u.r) < 0.3f * u.r) {
+            // Use centerDist (from frontend slider) as a fraction of min(r1,r2):
+            // centerDist=0.1 → must be very close to merge (tolerates slight jitter)
+            // centerDist=0.8 → circles up to 80% of their radius apart are merged
+            float mergeThresh = centerDist * (float)std::min(c.r, u.r);
+            if (dist < mergeThresh && std::abs(c.r - u.r) < 0.3f * u.r) {
                 dup = true; break;
             }
         }

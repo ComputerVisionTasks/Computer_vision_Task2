@@ -227,10 +227,12 @@ int main() {
         int rMax = form_int(req, "radius_max", 100);
         float thr = form_float(req, "threshold", 0.55f);
         int minAbsVotes = form_int(req, "min_abs_votes", 20);
+        float centerDist = form_float(req, "center_dist", 0.3f);
 
-        std::cout << "[Hough Circles] Radius: " << rMin << "-" << rMax 
-                  << ", Threshold: " << thr 
-                  << ", Min Votes: " << minAbsVotes << std::endl;
+        std::cout << "[Hough Circles] Radius: " << rMin << "-" << rMax
+                  << ", Threshold: " << thr
+                  << ", Min Votes: " << minAbsVotes
+                  << ", Center Dist: " << centerDist << std::endl;
 
         std::lock_guard<std::mutex> lk(g_mutex);
         if (g_sessions.find(sid) == g_sessions.end()) {
@@ -241,7 +243,7 @@ int main() {
         Session& s = g_sessions[sid];
         GrayImage gray = to_gray(s.current);
         GrayImage edges = canny(gray, 1.4f, 0.04f, 0.12f);
-        auto circles = hough_circles(edges, rMin, rMax, thr, minAbsVotes);
+        auto circles = hough_circles(edges, rMin, rMax, thr, minAbsVotes, centerDist);
 
         RGBImage ov = overlay_circles(s.current, circles, 0, 255, 0); // Green for circles
         json jc = json::array();
