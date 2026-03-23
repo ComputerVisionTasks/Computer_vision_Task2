@@ -1,4 +1,10 @@
-# FromScratchCV - Computer Vision from Scratch
+<p align="center">
+  <img src="Frontend/assets/img/Logo-Cvg2.png" alt="Pixelize Logo" width="300"/>
+</p>
+
+<p align="center">
+  <img src="UI_output/banner-task-02.jpg" alt="Pixelize Banner" width="100%"/>
+</p>
 
 A production-ready web application that implements core computer vision algorithms from scratch using only NumPy and Pillow. No OpenCV, scikit-image, or other CV libraries are used.
 
